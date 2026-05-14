@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Bell, LogOut, Moon, Sun, User, ChevronDown, Menu } from 'lucide-react';
+import { Bell, LogOut, User, ChevronDown, Menu } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
 import { useAuth } from '@/hooks/use-auth';
+import { NotificationDropdown } from './notification-dropdown';
 
 interface NavbarProps {
   onMenuClick?: () => void;
@@ -13,7 +14,6 @@ export function Navbar({ onMenuClick }: NavbarProps) {
   const { user } = useAuthStore();
   const { logout } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Close dropdown on outside click
@@ -27,21 +27,6 @@ export function Navbar({ onMenuClick }: NavbarProps) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Dark mode toggle
-  useEffect(() => {
-    const saved = localStorage.getItem('erp-theme');
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const isDark = saved ? saved === 'dark' : prefersDark;
-    setDarkMode(isDark);
-    document.documentElement.classList.toggle('dark', isDark);
-  }, []);
-
-  const toggleDarkMode = () => {
-    const next = !darkMode;
-    setDarkMode(next);
-    document.documentElement.classList.toggle('dark', next);
-    localStorage.setItem('erp-theme', next ? 'dark' : 'light');
-  };
 
   const roleColorClass = {
     ADMIN: 'role-admin',
@@ -65,21 +50,9 @@ export function Navbar({ onMenuClick }: NavbarProps) {
       </div>
 
       <div className="navbar-right">
-        {/* Theme Toggle */}
-        <button
-          className="navbar-icon-btn"
-          onClick={toggleDarkMode}
-          aria-label="Toggle dark mode"
-          id="theme-toggle-btn"
-        >
-          {darkMode ? <Sun size={18} /> : <Moon size={18} />}
-        </button>
 
         {/* Notifications */}
-        <button className="navbar-icon-btn" aria-label="Notifications" id="notifications-btn">
-          <Bell size={18} />
-          <span className="notification-dot" />
-        </button>
+        <NotificationDropdown />
 
         {/* User Dropdown */}
         <div className="navbar-user-dropdown" ref={dropdownRef}>

@@ -167,7 +167,6 @@ export function ClosedProjectsDashboard() {
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
              </div>
-             <Button variant="outline" size="sm"><Download className="h-4 w-4 mr-2" /> Archive Export</Button>
           </div>
         </div>
         <div className="overflow-x-auto">
@@ -189,7 +188,12 @@ export function ClosedProjectsDashboard() {
                   <td className="px-6 py-4 text-slate-500 font-medium">{p.customer_name}</td>
                   <td className="px-6 py-4 text-slate-400 text-xs">{new Date(p.date_received).toLocaleDateString()}</td>
                   <td className="px-6 py-4">
-                    <Button variant="ghost" size="sm" className="text-emerald-600 font-bold hover:bg-emerald-50">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="text-emerald-600 font-bold hover:bg-emerald-50"
+                      onClick={() => router.push(`/admin/projects/${p.id}`)}
+                    >
                       DETAILS <ChevronRight className="h-3 w-3 ml-1" />
                     </Button>
                   </td>

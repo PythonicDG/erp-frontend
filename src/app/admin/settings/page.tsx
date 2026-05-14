@@ -3,22 +3,8 @@
 import React, { useState } from 'react';
 import { 
   Building2, 
-  ShieldCheck, 
-  History, 
-  Save,
-  Globe,
-  Mail,
-  Phone,
-  MapPin,
-  Lock,
-  Eye,
-  EyeOff
+  History
 } from 'lucide-react';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Select } from '@/components/ui/select';
 import { GeneralSettings } from '@/components/admin/settings/general-settings';
 import { AuditLogs } from '@/components/admin/settings/audit-logs';
 
@@ -37,13 +23,6 @@ export default function SettingsPage() {
         <div>
           <h1 className="text-3xl font-bold text-slate-900 tracking-tight">System Settings</h1>
           <p className="text-slate-500 text-sm mt-1">Manage company information and track system activities.</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Button variant="outline" size="sm">Discard Changes</Button>
-          <Button size="sm" className="shadow-lg shadow-blue-500/20">
-            <Save className="h-4 w-4 mr-2" />
-            Save Settings
-          </Button>
         </div>
       </div>
 

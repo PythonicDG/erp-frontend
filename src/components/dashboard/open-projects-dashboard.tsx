@@ -28,6 +28,7 @@ export function OpenProjectsDashboard() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedStage, setSelectedStage] = useState('All');
 
   useEffect(() => {
     const fetchDashboard = async () => {
@@ -47,6 +48,7 @@ export function OpenProjectsDashboard() {
 
   const filteredProjects = data.recent_projects.filter(p => 
     p.status !== 'Closed' && 
+    (selectedStage === 'All' || p.current_stage === selectedStage) &&
     (p.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
      p.pid.toLowerCase().includes(searchQuery.toLowerCase()) ||
      p.customer_name.toLowerCase().includes(searchQuery.toLowerCase()))
@@ -124,8 +126,19 @@ export function OpenProjectsDashboard() {
           <div className="flex justify-between items-center">
             <h3 className="font-bold text-slate-900">Project List (Filtered)</h3>
             <div className="flex gap-2">
-               <Button variant="outline" size="sm"><Filter className="h-4 w-4 mr-2" /> Filter by Stage</Button>
-               <Button variant="outline" size="sm">Export List</Button>
+               <div className="flex items-center gap-2">
+                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">Filter by Stage:</span>
+                 <select 
+                    className="h-9 px-3 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all font-medium text-slate-700"
+                    value={selectedStage}
+                    onChange={(e) => setSelectedStage(e.target.value)}
+                 >
+                    <option value="All">All Stages</option>
+                    {data.charts.stage_distribution.map((stage: any) => (
+                      <option key={stage.name} value={stage.name}>{stage.name}</option>
+                    ))}
+                 </select>
+               </div>
             </div>
           </div>
           <div className="relative">

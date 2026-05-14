@@ -56,22 +56,6 @@ export function DashboardOverview() {
           <p className="text-slate-500">Real-time operational metrics and system overview.</p>
         </div>
         <div className="flex gap-3">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="bg-white border-slate-200 text-slate-600 px-3 py-1 text-xs"
-            onClick={async () => {
-              try {
-                const res = await api.post('/api/projects/sync_all_statuses/');
-                toast.success((res.data as any).message);
-                window.location.reload();
-              } catch (e) {
-                toast.error('Sync failed');
-              }
-            }}
-          >
-             <Clock className="h-3 w-3 mr-1.5" /> Sync Statuses
-          </Button>
           <Badge variant="outline" className="bg-white border-slate-200 text-slate-600 px-3 py-1">
              <Calendar className="h-3 w-3 mr-1.5" /> FY {data.system_info.financial_year}
           </Badge>
@@ -110,16 +94,16 @@ export function DashboardOverview() {
         <StatCard 
           title="Active Customers" 
           value={data.stats.customers} 
-          icon={<Users className="text-purple-600" />} 
+          icon={<Users className="text-indigo-600" />} 
           trend="+3" 
-          color="purple"
+          color="indigo"
         />
         <StatCard 
           title="Completion Rate" 
           value={`${data.stats.completion_rate}%`} 
-          icon={<TrendingUp className="text-indigo-600" />} 
+          icon={<TrendingUp className="text-emerald-600" />} 
           trend="+2.4%" 
-          color="indigo"
+          color="emerald"
         />
       </div>
 
@@ -230,7 +214,13 @@ export function DashboardOverview() {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <Badge variant={p.status === 'Closed' ? 'success' : 'info'}>
+                      <Badge 
+                        variant={
+                          p.status === 'Closed' ? 'success' : 
+                          p.status === 'Pending Approval' ? 'pending' :
+                          p.status === 'Rejected' ? 'danger' : 'info'
+                        }
+                      >
                         {p.status}
                       </Badge>
                     </td>

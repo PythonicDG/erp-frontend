@@ -102,7 +102,7 @@ export function StageCreateView() {
             </div>
           </div>
 
-          <Button type="submit" isLoading={loading} className="w-full h-12 shadow-lg shadow-blue-500/20">
+          <Button type="submit" loading={loading} className="w-full h-12 shadow-lg shadow-blue-500/20">
             Create Stage & Continue to Form Design
           </Button>
         </form>

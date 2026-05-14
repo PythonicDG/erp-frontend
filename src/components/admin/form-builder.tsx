@@ -104,7 +104,7 @@ export function FormBuilder({ stageId }: FormBuilderProps) {
           </div>
         </div>
         <div className="flex gap-3">
-          <Button onClick={handleSave} isLoading={saving} className="shadow-lg shadow-blue-500/20 px-8 h-11">
+          <Button onClick={handleSave} loading={saving} className="shadow-lg shadow-blue-500/20 px-8 h-11">
             <Save className="h-4 w-4 mr-2" /> Save & Publish Form
           </Button>
         </div>
