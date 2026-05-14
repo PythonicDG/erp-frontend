@@ -1,6 +1,24 @@
 import api from '@/lib/axios';
 
 export type ProjectStatus = 'Draft' | 'Open' | 'In Progress' | 'Closed' | 'Rejected';
+export type StageStatus = 'Locked' | 'Unlocked' | 'Completed';
+
+export interface WorkflowStage {
+  id: number;
+  name: string;
+  order: number;
+  status: StageStatus;
+  unlocked_at: string | null;
+  completed_at: string | null;
+}
+
+export interface ActivityLog {
+  id: number;
+  action: string;
+  details: any;
+  timestamp: string;
+  user_name: string;
+}
 
 export interface Project {
   id: number;
@@ -18,6 +36,9 @@ export interface Project {
   status: ProjectStatus;
   created_at: string;
   updated_at: string;
+  created_by_name: string;
+  stages?: WorkflowStage[];
+  activities?: ActivityLog[];
 }
 
 export interface ProjectFilters {
@@ -43,7 +64,7 @@ export const projectService = {
     return response.data;
   },
 
-  getById: async (id: number) => {
+  getById: async (id: number | string) => {
     const response = await api.get<Project>(`/api/projects/${id}/`);
     return response.data;
   },
@@ -53,12 +74,12 @@ export const projectService = {
     return response.data;
   },
 
-  update: async (id: number, data: Partial<Project>) => {
+  update: async (id: number | string, data: Partial<Project>) => {
     const response = await api.patch<Project>(`/api/projects/${id}/`, data);
     return response.data;
   },
 
-  delete: async (id: number) => {
+  delete: async (id: number | string) => {
     await api.delete(`/api/projects/${id}/`);
   },
 
