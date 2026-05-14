@@ -45,10 +45,30 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
       return <GridField field={field} readOnly={readOnly} />;
     }
 
+    const value = formMethods.watch(field.name);
+
+    if (readOnly) {
+      return (
+        <div className="space-y-1.5">
+          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{field.label}</label>
+          <div className="min-h-[40px] flex items-center px-4 py-2 bg-slate-50/50 border border-slate-100 rounded-lg text-sm text-slate-700 font-semibold">
+            {field.field_type === 'boolean' ? (
+              <div className="flex items-center gap-2">
+                <div className={`h-2 w-2 rounded-full ${value ? 'bg-emerald-500' : 'bg-slate-300'}`} />
+                {value ? 'Yes / True' : 'No / False'}
+              </div>
+            ) : (
+              value || <span className="text-slate-300 italic font-normal">Not provided</span>
+            )}
+          </div>
+        </div>
+      );
+    }
+
     const commonProps = {
       label: field.label,
       placeholder: field.placeholder,
-      disabled: readOnly || field.is_readonly,
+      disabled: field.is_readonly,
       ...register(field.name, { required: field.is_required ? 'Required' : false }),
       error: errors[field.name]?.message as string,
     };
@@ -61,14 +81,14 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
         return (
           <div className="w-full">
             <label className="block text-sm font-medium text-slate-700 mb-1.5">{field.label}</label>
-            <textarea {...register(field.name)} disabled={readOnly} className="min-h-[100px] w-full rounded-lg border border-slate-200 p-3 text-sm focus:ring-2 focus:ring-blue-500/20 outline-hidden transition-all" />
+            <textarea {...register(field.name)} className="min-h-[100px] w-full rounded-lg border border-slate-200 p-3 text-sm focus:ring-2 focus:ring-blue-500/20 outline-hidden transition-all" />
           </div>
         );
       case 'dropdown': return <Select {...commonProps} options={field.options || []} />;
       case 'boolean':
         return (
           <div className="flex items-center gap-3">
-             <input type="checkbox" {...register(field.name)} disabled={readOnly} className="h-5 w-5 rounded border-slate-300 text-blue-600" />
+             <input type="checkbox" {...register(field.name)} className="h-5 w-5 rounded border-slate-300 text-blue-600" />
              <label className="text-sm font-medium text-slate-700">{field.label}</label>
           </div>
         );
@@ -163,10 +183,13 @@ const GridField = ({ field, readOnly }: { field: FormField; readOnly?: boolean }
                   const options = columnOptions[col];
                   return (
                     <td key={col} className="px-2 py-2">
-                      {options ? (
+                      {readOnly ? (
+                        <div className="px-2 py-1.5 text-sm text-slate-700 font-medium">
+                          {row[col] || <span className="text-slate-300 italic">-</span>}
+                        </div>
+                      ) : options ? (
                         <select
                           {...register(`${field.name}.${i}.${col}`)}
-                          disabled={readOnly}
                           className="w-full bg-white border border-slate-200 rounded-md px-2 py-1.5 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-hidden transition-all disabled:bg-slate-50"
                         >
                           <option value="">Select...</option>
@@ -178,7 +201,6 @@ const GridField = ({ field, readOnly }: { field: FormField; readOnly?: boolean }
                         <input
                           {...register(`${field.name}.${i}.${col}`)}
                           defaultValue={row[col] || ''}
-                          disabled={readOnly}
                           placeholder="..."
                           className="w-full bg-white border border-slate-200 rounded-md px-2 py-1.5 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-hidden transition-all disabled:bg-slate-50"
                         />
