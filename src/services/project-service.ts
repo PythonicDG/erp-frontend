@@ -69,6 +69,11 @@ export const projectService = {
     return response.data;
   },
 
+  getFullReport: async (id: number | string) => {
+    const response = await api.get(`/api/projects/${id}/full_report/`);
+    return response.data;
+  },
+
   create: async (data: Partial<Project>) => {
     const response = await api.post<Project>('/api/projects/', data);
     return response.data;

@@ -131,7 +131,7 @@ export function DashboardOverview() {
             <Badge variant="secondary" className="text-[10px]">Monthly Data</Badge>
           </div>
           <div className="h-80 w-full min-h-[320px]">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0}>
               <AreaChart data={data.charts.monthly_trend}>
                 <defs>
                   <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
@@ -155,7 +155,7 @@ export function DashboardOverview() {
         <Card className="p-6 space-y-6">
            <h3 className="font-bold text-slate-900">Type Distribution</h3>
            <div className="h-64 w-full min-h-[256px]">
-             <ResponsiveContainer width="100%" height="100%">
+             <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                <PieChart>
                  <Pie
                    data={data.charts.type_distribution}

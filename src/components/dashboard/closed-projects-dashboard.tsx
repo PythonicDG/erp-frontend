@@ -95,7 +95,7 @@ export function ClosedProjectsDashboard() {
             <Badge variant="success" className="bg-emerald-50 text-emerald-600 border-emerald-100">Growth Analysis</Badge>
           </div>
           <div className="h-80 w-full">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0}>
               <AreaChart data={data.charts.monthly_trend}>
                 <defs>
                   <linearGradient id="colorSuccess" x1="0" y1="0" x2="0" y2="1">
@@ -119,7 +119,7 @@ export function ClosedProjectsDashboard() {
         <Card className="p-6 space-y-6">
            <h3 className="font-bold text-slate-900">Success by Type</h3>
            <div className="h-64 w-full">
-             <ResponsiveContainer width="100%" height="100%">
+             <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                <PieChart>
                  <Pie
                    data={data.charts.type_distribution}

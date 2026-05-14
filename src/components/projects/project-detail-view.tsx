@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   CheckCircle2, 
   Lock, 
@@ -10,14 +10,19 @@ import {
   Building2,
   Activity,
   ChevronRight,
-  MessageSquare
+  MessageSquare,
+  Printer,
+  Download,
+  FileText
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Project, projectService } from '@/services/project-service';
 import { workflowService, StageInstance } from '@/services/workflow-service';
+import { settingsService, CompanyProfile } from '@/services/settings-service';
 import { DynamicForm } from '@/components/workflow/dynamic-form';
+import { generateFullProjectReport } from '@/lib/report-utils';
 import toast from 'react-hot-toast';
 
 interface ProjectDetailViewProps {
@@ -28,6 +33,7 @@ interface ProjectDetailViewProps {
 export function ProjectDetailView({ id, role }: ProjectDetailViewProps) {
   const [project, setProject] = useState<Project | null>(null);
   const [stages, setStages] = useState<StageInstance[]>([]);
+  const [companyProfile, setCompanyProfile] = useState<CompanyProfile | null>(null);
   const [activeStage, setActiveStage] = useState<StageInstance | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
@@ -37,14 +43,16 @@ export function ProjectDetailView({ id, role }: ProjectDetailViewProps) {
 
   const fetchData = async () => {
     try {
-      const [projectData, stagesData] = await Promise.all([
+      const [projectData, stagesData, companyData] = await Promise.all([
         projectService.getById(id),
-        workflowService.getProjectStages(id)
+        workflowService.getProjectStages(id),
+        settingsService.getCompanyProfile().catch(() => null)
       ]);
       const stagesList = Array.isArray(stagesData) ? stagesData : (stagesData as any)?.results || [];
       
       setProject(projectData);
       setStages(stagesList);
+      setCompanyProfile(companyData);
       
       // Default to the first unlocked or in-progress stage
       const current = stagesList.find((s: any) => s.status === 'Unlocked' || s.status === 'Submitted' || s.status === 'Rejected' || s.status === 'In Progress') 
@@ -61,6 +69,179 @@ export function ProjectDetailView({ id, role }: ProjectDetailViewProps) {
   useEffect(() => {
     fetchData();
   }, [id]);
+
+  const handlePrintStage = () => {
+    if (!activeStage || !project) return;
+
+    const logoUrl = companyProfile?.logo 
+      ? (companyProfile.logo.startsWith('http') ? companyProfile.logo : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}${companyProfile.logo}`)
+      : null;
+
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    const formData = activeStage.current_submission?.data || {};
+    const fields = activeStage.template_details.fields || [];
+
+    let formHtml = '';
+    const sections: Record<string, any[]> = {};
+    fields.forEach(f => {
+      const sec = f.section || 'General';
+      if (!sections[sec]) sections[sec] = [];
+      sections[sec].push(f);
+    });
+
+    Object.entries(sections).forEach(([name, secFields]) => {
+      formHtml += `
+        <div class="report-section">
+          <h3 class="section-title">${name}</h3>
+          <div class="field-grid">
+      `;
+
+      secFields.forEach(f => {
+        const val = formData[f.name];
+        if (f.field_type === 'grid') {
+          const rows = val || [];
+          const columns = f.configuration?.columns || ['Value', 'Remarks'];
+          const hasParameter = (f.configuration?.rows?.length || 0) > 0;
+          
+          formHtml += `
+            <div class="grid-field">
+              <label class="field-label">${f.label}</label>
+              <table class="report-table">
+                <thead>
+                  <tr>
+                    <th>Sr.</th>
+                    ${hasParameter ? '<th>Parameter</th>' : ''}
+                    ${columns.map((c: string) => `<th>${c}</th>`).join('')}
+                  </tr>
+                </thead>
+                <tbody>
+                  ${rows.map((r: any, i: number) => `
+                    <tr>
+                      <td>${i + 1}</td>
+                      ${hasParameter ? `<td>${r.parameter || ''}</td>` : ''}
+                      ${columns.map((c: string) => `<td>${r[c] || ''}</td>`).join('')}
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          `;
+        } else {
+          formHtml += `
+            <div class="field-item">
+              <label class="field-label">${f.label}</label>
+              <div class="field-value">${val === true ? 'Yes' : val === false ? 'No' : (val || '—')}</div>
+            </div>
+          `;
+        }
+      });
+
+      formHtml += `</div></div>`;
+    });
+
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Stage Report - ${project.pid} - ${activeStage.template_details.name}</title>
+          <style>
+            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+            body { font-family: 'Inter', sans-serif; color: #1e293b; line-height: 1.5; padding: 40px; margin: 0; }
+            .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #3b82f6; padding-bottom: 20px; margin-bottom: 30px; }
+            .company-info { text-align: right; }
+            .company-name { font-size: 20px; font-weight: 700; color: #0f172a; margin: 0; }
+            .company-details { font-size: 11px; color: #64748b; margin-top: 4px; }
+            .logo { height: 60px; object-fit: contain; }
+            
+            .report-title { font-size: 24px; font-weight: 700; color: #0f172a; margin-bottom: 20px; text-align: center; text-transform: uppercase; letter-spacing: 1px; }
+            
+            .info-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; background: #f8fafc; padding: 20px; border-radius: 8px; margin-bottom: 30px; border: 1px solid #e2e8f0; }
+            .info-item { display: flex; flex-direction: column; gap: 4px; }
+            .info-label { font-size: 10px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; }
+            .info-value { font-size: 13px; font-weight: 600; color: #1e293b; }
+            
+            .report-section { margin-bottom: 30px; }
+            .section-title { font-size: 14px; font-weight: 700; color: #3b82f6; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.05em; }
+            
+            .field-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+            .field-item { display: flex; flex-direction: column; gap: 4px; }
+            .field-label { font-size: 11px; font-weight: 600; color: #64748b; }
+            .field-value { font-size: 13px; color: #0f172a; min-height: 20px; border-bottom: 1px solid #f1f5f9; padding-bottom: 2px; }
+            
+            .grid-field { grid-column: span 2; }
+            .report-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
+            .report-table th { background: #f1f5f9; text-align: left; padding: 10px; font-weight: 700; color: #475569; border: 1px solid #e2e8f0; }
+            .report-table td { padding: 10px; border: 1px solid #e2e8f0; color: #1e293b; }
+            
+            .footer { position: fixed; bottom: 30px; left: 40px; right: 40px; border-top: 1px solid #e2e8f0; padding-top: 10px; display: flex; justify-content: space-between; font-size: 10px; color: #94a3b8; }
+            
+            @media print {
+              body { padding: 20px; }
+              .no-print { display: none; }
+              @page { margin: 2cm; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div class="logo-container">
+              ${logoUrl ? `<img src="${logoUrl}" class="logo" />` : '<div style="font-size: 24px; font-weight: 800; color: #3b82f6;">ERP SYSTEM</div>'}
+            </div>
+            <div class="company-info">
+              <p class="company-name">${companyProfile?.name || 'PCEPL Engineering'}</p>
+              <p class="company-details">
+                ${companyProfile?.address || ''}<br/>
+                ${companyProfile?.city || ''}, ${companyProfile?.state || ''} ${companyProfile?.postal_code || ''}<br/>
+                Email: ${companyProfile?.email || ''} | Phone: ${companyProfile?.phone || ''}
+              </p>
+            </div>
+          </div>
+
+          <h1 class="report-title">STAGE COMPLETION REPORT</h1>
+
+          <div class="info-grid">
+            <div class="info-item">
+              <span class="info-label">PROJECT NAME</span>
+              <span class="info-value">${project.name}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">PROJECT ID</span>
+              <span class="info-value">${project.pid}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">CUSTOMER</span>
+              <span class="info-value">${project.customer_name}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">STAGE NAME</span>
+              <span class="info-value">${activeStage.template_details.name}</span>
+            </div>
+          </div>
+
+          ${formHtml}
+
+          <div class="footer">
+            <span>Printed on ${new Date().toLocaleString()}</span>
+            <span>ERP System - Confidential Report</span>
+            <span>Page 1 of 1</span>
+          </div>
+
+          <script>
+            window.onload = () => {
+              window.print();
+              setTimeout(() => { window.close(); }, 500);
+            };
+          </script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
+
+  const handlePrintFullReport = async () => {
+    await generateFullProjectReport(id);
+  };
 
   const handleFormSubmit = async (data: any) => {
     if (!activeStage) return;
@@ -131,6 +312,18 @@ export function ProjectDetailView({ id, role }: ProjectDetailViewProps) {
             <div className="flex items-center gap-1.5"><User className="h-4 w-4" />Created by {project.created_by_name}</div>
           </div>
         </div>
+
+        <div className="flex flex-wrap items-center gap-3">
+           <Button variant="outline" size="sm" onClick={handlePrintStage} disabled={!activeStage || (activeStage.status !== 'Approved' && activeStage.status !== 'Submitted')}>
+              <Printer className="h-4 w-4 mr-2" /> Print Form
+           </Button>
+           <Button variant="outline" size="sm" onClick={handlePrintFullReport} className="text-indigo-600 border-indigo-200 hover:bg-indigo-50">
+              <FileText className="h-4 w-4 mr-2" /> Full Report
+           </Button>
+           <Button size="sm" onClick={handlePrintStage} disabled={!activeStage || (activeStage.status !== 'Approved' && activeStage.status !== 'Submitted')} className="shadow-lg shadow-blue-500/20">
+              <Download className="h-4 w-4 mr-2" /> Download PDF
+           </Button>
+        </div>
       </div>
 
       {/* Progress Tracker (Dynamic) */}
@@ -182,18 +375,26 @@ export function ProjectDetailView({ id, role }: ProjectDetailViewProps) {
               className="shadow-xl shadow-blue-500/5"
             >
               <div className="mb-6 flex items-center justify-between">
-                <Badge variant={
-                  activeStage.status === 'Approved' ? 'success' : 
-                  activeStage.status === 'Submitted' ? 'warning' :
-                  activeStage.status === 'Rejected' ? 'danger' : 'info'
-                }>
-                  Status: {activeStage.status}
-                </Badge>
-                
+                <div className="flex items-center gap-3">
+                  <Badge variant={
+                    activeStage.status === 'Approved' ? 'success' : 
+                    activeStage.status === 'Submitted' ? 'warning' :
+                    activeStage.status === 'Rejected' ? 'danger' : 'info'
+                  }>
+                    Status: {activeStage.status}
+                  </Badge>
+                  
+                  {(activeStage.status === 'Approved' || activeStage.status === 'Submitted') && (
+                    <span className="text-xs text-slate-400 flex items-center gap-1">
+                      <Lock className="h-3 w-3" /> Read Only View
+                    </span>
+                  )}
+                </div>
+
                 {(activeStage.status === 'Approved' || activeStage.status === 'Submitted') && (
-                  <span className="text-xs text-slate-400 flex items-center gap-1">
-                    <Lock className="h-3 w-3" /> Read Only View
-                  </span>
+                  <Button variant="ghost" size="sm" onClick={handlePrintStage} className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 text-xs font-bold">
+                    <Printer className="h-3 w-3 mr-1.5" /> PRINT REPORT
+                  </Button>
                 )}
               </div>
 

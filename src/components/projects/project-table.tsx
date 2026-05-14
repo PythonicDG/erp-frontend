@@ -12,12 +12,15 @@ import {
   Calendar,
   User,
   Hash,
-  Activity
+  Activity,
+  Printer,
+  FileText
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Project, ProjectStatus } from '@/services/project-service';
+import { generateFullProjectReport } from '@/lib/report-utils';
 
 interface ProjectTableProps {
   projects: Project[];
@@ -208,9 +211,23 @@ export const ProjectTable: React.FC<ProjectTableProps> = ({
                       </div>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
+                      <div className="flex items-center justify-end gap-2">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8 text-slate-400 hover:text-blue-600 opacity-0 group-hover:opacity-100 transition-all"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            generateFullProjectReport(project.id);
+                          }}
+                          title="Print Project Report"
+                        >
+                          <Printer className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))

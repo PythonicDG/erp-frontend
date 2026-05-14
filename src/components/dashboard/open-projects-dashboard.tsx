@@ -72,7 +72,7 @@ export function OpenProjectsDashboard() {
             <Badge variant="info">Active Pipeline</Badge>
           </div>
           <div className="h-80 w-full min-h-[320px]">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0}>
               <BarChart data={data.charts.stage_distribution} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
                 <XAxis type="number" axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#94a3b8'}} />

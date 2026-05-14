@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -17,6 +17,7 @@ import {
   Layers,
 } from 'lucide-react';
 import type { UserRole } from '@/types/auth';
+import { settingsService, CompanyProfile } from '@/services/settings-service';
 
 interface NavItem {
   label: string;
@@ -78,10 +79,27 @@ interface SidebarProps {
 
 export function Sidebar({ userRole, isMobileOpen, onClose }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
+  const [profile, setProfile] = useState<CompanyProfile | null>(null);
   const pathname = usePathname();
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const data = await settingsService.getCompanyProfile();
+        setProfile(data);
+      } catch (error) {
+        console.error('Failed to load profile for sidebar');
+      }
+    };
+    fetchProfile();
+  }, []);
 
   const rolePrefix = `/${userRole.toLowerCase()}`;
   const filteredItems = navItems.filter((item) => item.roles.includes(userRole));
+
+  const logoUrl = profile?.logo 
+    ? (profile.logo.startsWith('http') ? profile.logo : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}${profile.logo}`)
+    : null;
 
   return (
     <aside className={`sidebar ${collapsed ? 'sidebar-collapsed' : ''} ${isMobileOpen ? 'sidebar-mobile-open' : ''}`}>
@@ -89,11 +107,15 @@ export function Sidebar({ userRole, isMobileOpen, onClose }: SidebarProps) {
       <div className="sidebar-header">
         <Link href={`${rolePrefix}/dashboard`} className="sidebar-logo" onClick={onClose}>
           <div className="sidebar-logo-icon">
-            <Building2 size={22} strokeWidth={1.5} />
+            {logoUrl ? (
+              <img src={logoUrl} alt="Logo" className="h-full w-full object-contain p-0.5" />
+            ) : (
+              <Building2 size={22} strokeWidth={1.5} />
+            )}
           </div>
           {!collapsed && (
             <div className="sidebar-logo-text">
-              <span className="sidebar-logo-title">ERP</span>
+              <span className="sidebar-logo-title">{profile?.name || 'ERP'}</span>
               <span className="sidebar-logo-subtitle">
                 {roleLabels[userRole]}
               </span>
