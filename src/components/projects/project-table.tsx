@@ -124,7 +124,7 @@ export const ProjectTable: React.FC<ProjectTableProps> = ({
       </div>
 
       {/* Table Container */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+      <div className="table-container">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>

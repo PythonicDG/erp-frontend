@@ -55,8 +55,11 @@ export function ProjectsView({ role }: ProjectsViewProps) {
             Manage and track all customer projects, timelines, and statuses.
           </p>
         </div>
-        {(role === 'admin' || role === 'supervisor') && (
-          <Button className="shadow-blue-500/20 shadow-lg">
+        {['admin', 'supervisor', 'employee'].includes(role) && (
+          <Button 
+            className="shadow-blue-500/20 shadow-lg"
+            onClick={() => router.push(`/${role}/projects/new`)}
+          >
             <Plus className="h-4 w-4 mr-2" />
             Create New Project
           </Button>
