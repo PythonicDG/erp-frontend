@@ -38,5 +38,16 @@ export const settingsService = {
   getAuditLogs: async (params?: any) => {
     const response = await api.get<AuditLog[]>('/api/auth/audit-logs/', { params });
     return response.data;
+  },
+
+  updateLogo: async (file: File) => {
+    const formData = new FormData();
+    formData.append('logo', file);
+    const response = await api.patch<CompanyProfile>('/api/auth/company-profile/', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
   }
 };

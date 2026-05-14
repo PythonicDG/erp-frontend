@@ -1,30 +1,65 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Building2, Mail, Phone, MapPin, Globe, Upload, Loader2 } from 'lucide-react';
+import { Building2, Mail, Phone, MapPin, Globe, Upload, Loader2, Image as ImageIcon } from 'lucide-react';
 import { settingsService, CompanyProfile } from '@/services/settings-service';
 import toast from 'react-hot-toast';
 
 export function GeneralSettings() {
   const [profile, setProfile] = useState<CompanyProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const fetchProfile = async () => {
+    try {
+      const data = await settingsService.getCompanyProfile();
+      setProfile(data);
+    } catch (error) {
+      console.error('Failed to load profile');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const data = await settingsService.getCompanyProfile();
-        setProfile(data);
-      } catch (error) {
-        console.error('Failed to load profile');
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchProfile();
   }, []);
+
+  const handleLogoClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Basic validation
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please upload an image file');
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Logo must be less than 2MB');
+      return;
+    }
+
+    setUploading(true);
+    const toastId = toast.loading('Uploading logo...');
+    try {
+      const updatedProfile = await settingsService.updateLogo(file);
+      setProfile(updatedProfile);
+      toast.success('Logo updated successfully', { id: toastId });
+    } catch (error) {
+      toast.error('Failed to upload logo', { id: toastId });
+    } finally {
+      setUploading(false);
+    }
+  };
 
   if (loading) return (
     <div className="py-20 flex flex-col items-center justify-center gap-4 text-slate-400">
@@ -93,22 +128,59 @@ export function GeneralSettings() {
       <div className="space-y-6">
         <Card title="Company Logo" subtitle="Used for reports and emails.">
           <div className="flex flex-col items-center gap-6 py-4">
-            <div className="h-32 w-32 rounded-2xl bg-slate-50 border-2 border-dashed border-slate-200 flex items-center justify-center relative group overflow-hidden">
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              onChange={handleFileChange} 
+              accept="image/*" 
+              className="hidden" 
+            />
+            <div 
+              onClick={handleLogoClick}
+              className={`h-40 w-40 rounded-2xl bg-slate-50 border-2 border-dashed border-slate-200 flex items-center justify-center relative group overflow-hidden cursor-pointer transition-all hover:border-blue-400 hover:bg-blue-50/30 ${uploading ? 'opacity-50 pointer-events-none' : ''}`}
+            >
                {profile?.logo ? (
-                 <img src={profile.logo} alt="Logo" className="h-full w-full object-contain p-2" />
+                 <img 
+                   src={profile.logo.startsWith('http') ? profile.logo : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}${profile.logo}`} 
+                   alt="Logo" 
+                   className="h-full w-full object-contain p-4" 
+                 />
                ) : (
-                 <Building2 className="h-12 w-12 text-slate-300 group-hover:scale-110 transition-transform" />
+                 <div className="flex flex-col items-center gap-2">
+                   <ImageIcon className="h-12 w-12 text-slate-300 group-hover:scale-110 transition-transform" />
+                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">No Logo</span>
+                 </div>
                )}
-               <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  <Button size="sm" variant="outline" className="bg-white border-none h-8 text-[10px]">
-                    <Upload className="h-3 w-3 mr-1" /> Change
-                  </Button>
+               
+               <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="h-10 w-10 rounded-full bg-white flex items-center justify-center shadow-lg">
+                      <Upload className="h-5 w-5 text-blue-600" />
+                    </div>
+                    <span className="text-[10px] font-bold text-white uppercase tracking-widest">Change Logo</span>
+                  </div>
                </div>
+
+               {uploading && (
+                 <div className="absolute inset-0 bg-white/80 flex items-center justify-center">
+                   <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                 </div>
+               )}
             </div>
             <div className="text-center">
               <p className="text-xs text-slate-500 max-w-[200px]">
-                Recommended size: 512x512px. PNG or SVG preferred.
+                Recommended size: 512x512px. <br />
+                PNG or SVG preferred (Max 2MB).
               </p>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="mt-3 text-blue-600 hover:text-blue-700 hover:bg-blue-50 text-[10px] font-bold"
+                onClick={handleLogoClick}
+                disabled={uploading}
+              >
+                BROWSE FILES
+              </Button>
             </div>
           </div>
         </Card>
