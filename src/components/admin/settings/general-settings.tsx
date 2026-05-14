@@ -1,12 +1,38 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Building2, Mail, Phone, MapPin, Globe, Upload } from 'lucide-react';
+import { Building2, Mail, Phone, MapPin, Globe, Upload, Loader2 } from 'lucide-react';
+import { settingsService, CompanyProfile } from '@/services/settings-service';
+import toast from 'react-hot-toast';
 
 export function GeneralSettings() {
+  const [profile, setProfile] = useState<CompanyProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const data = await settingsService.getCompanyProfile();
+        setProfile(data);
+      } catch (error) {
+        console.error('Failed to load profile');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProfile();
+  }, []);
+
+  if (loading) return (
+    <div className="py-20 flex flex-col items-center justify-center gap-4 text-slate-400">
+      <Loader2 className="h-8 w-8 animate-spin" />
+      <p className="text-sm font-medium">Loading profile...</p>
+    </div>
+  );
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
       {/* Left Column: Profile Info */}
@@ -16,8 +42,8 @@ export function GeneralSettings() {
             <div className="md:col-span-2">
               <Input 
                 label="Company Name" 
-                placeholder="e.g. Precision Engineering Pvt Ltd" 
-                defaultValue="PCEPL Engineering"
+                placeholder="Enter company name" 
+                defaultValue={profile?.name || ''}
                 icon={<Building2 className="h-4 w-4" />}
               />
             </div>
@@ -25,20 +51,20 @@ export function GeneralSettings() {
               label="Business Email" 
               type="email" 
               placeholder="contact@company.com" 
-              defaultValue="admin@pcepl.com"
+              defaultValue={profile?.email || ''}
               icon={<Mail className="h-4 w-4" />}
             />
             <Input 
               label="Phone Number" 
-              placeholder="+91 98765 43210" 
-              defaultValue="+91 20 2445 1234"
+              placeholder="+91 00000 00000" 
+              defaultValue={profile?.phone || ''}
               icon={<Phone className="h-4 w-4" />}
             />
             <div className="md:col-span-2">
               <Input 
                 label="Website URL" 
                 placeholder="https://www.company.com" 
-                defaultValue="https://www.pcepl-engineering.com"
+                defaultValue={profile?.website || ''}
                 icon={<Globe className="h-4 w-4" />}
               />
             </div>
@@ -50,15 +76,15 @@ export function GeneralSettings() {
             <div className="md:col-span-2">
               <Input 
                 label="Street Address" 
-                placeholder="123 Industrial Area, Phase II" 
-                defaultValue="Plot No. 45, Sector 12, PCMC Industrial Area"
+                placeholder="Building, Street, Area" 
+                defaultValue={profile?.address || ''}
                 icon={<MapPin className="h-4 w-4" />}
               />
             </div>
-            <Input label="City" defaultValue="Pune" />
-            <Input label="State / Province" defaultValue="Maharashtra" />
-            <Input label="Postal Code" defaultValue="411018" />
-            <Input label="Country" defaultValue="India" />
+            <Input label="City" defaultValue={profile?.city || ''} />
+            <Input label="State / Province" defaultValue={profile?.state || ''} />
+            <Input label="Postal Code" defaultValue={profile?.postal_code || ''} />
+            <Input label="Country" defaultValue={profile?.country || ''} />
           </div>
         </Card>
       </div>
@@ -68,7 +94,11 @@ export function GeneralSettings() {
         <Card title="Company Logo" subtitle="Used for reports and emails.">
           <div className="flex flex-col items-center gap-6 py-4">
             <div className="h-32 w-32 rounded-2xl bg-slate-50 border-2 border-dashed border-slate-200 flex items-center justify-center relative group overflow-hidden">
-               <Building2 className="h-12 w-12 text-slate-300 group-hover:scale-110 transition-transform" />
+               {profile?.logo ? (
+                 <img src={profile.logo} alt="Logo" className="h-full w-full object-contain p-2" />
+               ) : (
+                 <Building2 className="h-12 w-12 text-slate-300 group-hover:scale-110 transition-transform" />
+               )}
                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                   <Button size="sm" variant="outline" className="bg-white border-none h-8 text-[10px]">
                     <Upload className="h-3 w-3 mr-1" /> Change

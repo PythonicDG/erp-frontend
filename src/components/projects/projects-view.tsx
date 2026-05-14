@@ -22,6 +22,8 @@ export function ProjectsView({ role }: ProjectsViewProps) {
     updateFilters 
   } = useProjects();
 
+  const canCreate = ['admin', 'supervisor', 'employee'].includes(role);
+
   const handleRowClick = (project: Project) => {
     router.push(`/${role}/projects/${project.id}`);
   };
@@ -55,7 +57,7 @@ export function ProjectsView({ role }: ProjectsViewProps) {
             Manage and track all customer projects, timelines, and statuses.
           </p>
         </div>
-        {['admin', 'supervisor', 'employee'].includes(role) && (
+        {canCreate && (
           <Button 
             className="shadow-blue-500/20 shadow-lg"
             onClick={() => router.push(`/${role}/projects/new`)}

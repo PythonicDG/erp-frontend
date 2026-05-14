@@ -32,6 +32,9 @@ export function ProjectDetailView({ id, role }: ProjectDetailViewProps) {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
 
+  const canEdit = (role === 'admin' || role === 'supervisor' || role === 'employee');
+  const canApprove = (role === 'admin' || role === 'supervisor');
+
   const fetchData = async () => {
     try {
       const [projectData, stagesData] = await Promise.all([
@@ -219,11 +222,11 @@ export function ProjectDetailView({ id, role }: ProjectDetailViewProps) {
                     initialData={activeStage.current_submission?.data}
                     onSubmit={handleFormSubmit}
                     isLoading={actionLoading}
-                    readOnly={activeStage.status === 'Approved' || activeStage.status === 'Submitted'}
+                    readOnly={activeStage.status === 'Approved' || activeStage.status === 'Submitted' || !canEdit}
                   />
 
                   {/* Supervisor Approval Actions */}
-                  {activeStage.status === 'Submitted' && (role === 'admin' || role === 'supervisor') && (
+                  {activeStage.status === 'Submitted' && canApprove && (
                     <div className="flex gap-3 pt-6 border-t border-slate-100">
                       <Button variant="danger" onClick={handleReject} isLoading={actionLoading}>Reject Stage</Button>
                       <Button onClick={handleApprove} isLoading={actionLoading} className="bg-emerald-600 hover:bg-emerald-700">Approve Stage</Button>

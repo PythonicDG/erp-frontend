@@ -20,12 +20,10 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select } from '@/components/ui/select';
 import { GeneralSettings } from '@/components/admin/settings/general-settings';
-import { RoleManagement } from '@/components/admin/settings/role-management';
 import { AuditLogs } from '@/components/admin/settings/audit-logs';
 
 const tabs = [
   { id: 'general', label: 'Company Profile', icon: Building2 },
-  { id: 'roles', label: 'Roles & Permissions', icon: ShieldCheck },
   { id: 'audit', label: 'Audit Logs', icon: History },
 ];
 
@@ -38,7 +36,7 @@ export default function SettingsPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 tracking-tight">System Settings</h1>
-          <p className="text-slate-500 text-sm mt-1">Manage company information, user roles, and track system activities.</p>
+          <p className="text-slate-500 text-sm mt-1">Manage company information and track system activities.</p>
         </div>
         <div className="flex items-center gap-3">
           <Button variant="outline" size="sm">Discard Changes</Button>
@@ -74,7 +72,6 @@ export default function SettingsPage() {
       {/* Tab Content */}
       <div className="mt-8 transition-all duration-300">
         {activeTab === 'general' && <GeneralSettings />}
-        {activeTab === 'roles' && <RoleManagement />}
         {activeTab === 'audit' && <AuditLogs />}
       </div>
     </div>
