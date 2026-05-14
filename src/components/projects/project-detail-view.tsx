@@ -170,86 +170,70 @@ export function ProjectDetailView({ id, role }: ProjectDetailViewProps) {
       </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Stages Timeline / List */}
-        <div className="lg:col-span-2 space-y-10">
-          {stages.length > 0 ? (
-            stages
-              .filter(s => s.status !== 'Locked' || s.order === (stages.find(st => st.status === 'Locked')?.order || -1))
-              .map((stage, i) => {
-                const isReadOnly = stage.status === 'Approved' || stage.status === 'Submitted';
-                const isLocked = stage.status === 'Locked';
-                const isActive = activeStage?.id === stage.id;
+        {/* Active Stage Form/Details */}
+        <div className="lg:col-span-2 space-y-6">
+          {activeStage ? (
+            <Card 
+              title={`Stage ${activeStage.order}: ${activeStage.template_details.name}`}
+              subtitle={activeStage.template_details.description}
+              className="shadow-xl shadow-blue-500/5"
+            >
+              <div className="mb-6 flex items-center justify-between">
+                <Badge variant={
+                  activeStage.status === 'Approved' ? 'success' : 
+                  activeStage.status === 'Submitted' ? 'warning' :
+                  activeStage.status === 'Rejected' ? 'danger' : 'info'
+                }>
+                  Status: {activeStage.status}
+                </Badge>
+                
+                {(activeStage.status === 'Approved' || activeStage.status === 'Submitted') && (
+                  <span className="text-xs text-slate-400 flex items-center gap-1">
+                    <Lock className="h-3 w-3" /> Read Only View
+                  </span>
+                )}
+              </div>
 
-                return (
-                  <div 
-                    key={stage.id} 
-                    id={`stage-${stage.id}`}
-                    className={`scroll-mt-20 transition-all duration-500 ${isActive ? 'scale-100 opacity-100' : 'scale-[0.98] opacity-80'}`}
-                  >
-                    <Card 
-                      title={`Stage ${stage.order}: ${stage.template_details.name}`}
-                      subtitle={stage.template_details.description}
-                      className={`${isActive ? 'ring-2 ring-blue-500 shadow-xl shadow-blue-500/10' : ''}`}
-                    >
-                      <div className="mb-6 flex items-center justify-between">
-                        <Badge variant={
-                          stage.status === 'Approved' ? 'success' : 
-                          stage.status === 'Submitted' ? 'warning' :
-                          stage.status === 'Rejected' ? 'danger' : 
-                          stage.status === 'Locked' ? 'secondary' : 'info'
-                        }>
-                          {stage.status}
-                        </Badge>
-                        
-                        {isReadOnly && (
-                          <span className="text-xs text-slate-400 flex items-center gap-1">
-                            <Lock className="h-3 w-3" /> Read Only
-                          </span>
-                        )}
+              {activeStage.status === 'Locked' ? (
+                <div className="py-12 text-center space-y-4">
+                  <Lock className="h-12 w-12 mx-auto text-slate-300" />
+                  <p className="text-slate-500 font-medium">This stage is currently locked. Complete previous stages to unlock.</p>
+                </div>
+              ) : (
+                <div className="space-y-8">
+                  {/* Rejection Alert */}
+                  {activeStage.status === 'Rejected' && activeStage.current_submission?.remarks && (
+                    <div className="bg-red-50 border border-red-100 p-4 rounded-lg flex gap-3 text-red-800">
+                      <MessageSquare className="h-5 w-5 shrink-0" />
+                      <div>
+                        <p className="font-bold text-sm">Rejection Remark:</p>
+                        <p className="text-sm">{activeStage.current_submission.remarks}</p>
                       </div>
+                    </div>
+                  )}
 
-                      {isLocked ? (
-                        <div className="py-8 text-center space-y-3 bg-slate-50 rounded-xl border border-dashed border-slate-200">
-                          <Lock className="h-8 w-8 mx-auto text-slate-300" />
-                          <p className="text-slate-500 text-sm font-medium">This stage will unlock once the previous stage is approved.</p>
-                        </div>
-                      ) : (
-                        <div className="space-y-8">
-                          {/* Rejection Alert */}
-                          {stage.status === 'Rejected' && stage.current_submission?.remarks && (
-                            <div className="bg-red-50 border border-red-100 p-4 rounded-lg flex gap-3 text-red-800">
-                              <MessageSquare className="h-5 w-5 shrink-0" />
-                              <div>
-                                <p className="font-bold text-sm">Rejection Remark:</p>
-                                <p className="text-sm">{stage.current_submission.remarks}</p>
-                              </div>
-                            </div>
-                          )}
+                  <DynamicForm 
+                    key={activeStage.id}
+                    fields={activeStage.template_details.fields || []}
+                    project={project}
+                    initialData={activeStage.current_submission?.data}
+                    onSubmit={handleFormSubmit}
+                    isLoading={actionLoading}
+                    readOnly={activeStage.status === 'Approved' || activeStage.status === 'Submitted'}
+                  />
 
-                          <DynamicForm 
-                            fields={stage.template_details.fields || []}
-                            project={project}
-                            initialData={stage.current_submission?.data}
-                            onSubmit={(data) => handleFormSubmit(data)}
-                            isLoading={actionLoading && activeStage?.id === stage.id}
-                            readOnly={isReadOnly}
-                          />
-
-                          {/* Supervisor Approval Actions */}
-                          {stage.status === 'Submitted' && (role === 'admin' || role === 'supervisor') && (
-                            <div className="flex gap-3 pt-6 border-t border-slate-100">
-                              <Button variant="danger" onClick={handleReject} isLoading={actionLoading}>Reject Stage</Button>
-                              <Button onClick={handleApprove} isLoading={actionLoading} className="bg-emerald-600 hover:bg-emerald-700">Approve Stage</Button>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </Card>
-                  </div>
-                );
-              })
+                  {/* Supervisor Approval Actions */}
+                  {activeStage.status === 'Submitted' && (role === 'admin' || role === 'supervisor') && (
+                    <div className="flex gap-3 pt-6 border-t border-slate-100">
+                      <Button variant="danger" onClick={handleReject} isLoading={actionLoading}>Reject Stage</Button>
+                      <Button onClick={handleApprove} isLoading={actionLoading} className="bg-emerald-600 hover:bg-emerald-700">Approve Stage</Button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </Card>
           ) : (
-            <div className="p-20 text-center text-slate-400">Loading project stages...</div>
+            <div className="p-20 text-center text-slate-400">Select a stage from the timeline to view details</div>
           )}
         </div>
 
