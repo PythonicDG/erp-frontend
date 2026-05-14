@@ -81,9 +81,14 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
     <FormProvider {...formMethods}>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-12">
         {/* Dynamic Sections */}
-        {Object.entries(sections).map(([name, sectionFields]) => (
+        {Object.entries(sections).map(([name, sectionFields], index) => (
           <div key={name} className="space-y-6">
-            <h3 className="font-bold text-slate-900 uppercase tracking-wider text-sm border-b pb-2">{name}</h3>
+            <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
+              <div className="h-6 w-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold">
+                {index + 2}
+              </div>
+              <h3 className="font-bold text-slate-900 uppercase tracking-tight text-sm">{name}</h3>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
               {sectionFields.sort((a, b) => a.order - b.order).map(f => (
                 <div key={f.id} className={f.field_type === 'grid' || f.field_type === 'textarea' ? 'md:col-span-2' : ''}>
@@ -96,7 +101,7 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
 
         {!readOnly && (
           <div className="flex justify-end gap-3 pt-8 border-t">
-            <Button type="submit" isLoading={isLoading} className="px-8 shadow-lg shadow-blue-500/20">Submit Stage Data</Button>
+            <Button type="submit" loading={isLoading} className="px-8 shadow-lg shadow-blue-500/20">Submit Stage Data</Button>
           </div>
         )}
       </form>

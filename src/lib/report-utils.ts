@@ -184,6 +184,6 @@ export const generateFullProjectReport = async (projectId: string | number) => {
     printWindow.document.close();
   } catch (error) {
     toast.error('Failed to generate report');
-    console.error(error);
+    // toast.error('PDF Generation Failed');
   }
 };

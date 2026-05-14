@@ -11,6 +11,7 @@ export interface CompanyProfile {
   postal_code: string;
   country: string;
   logo?: string;
+  audit_logs_enabled?: boolean;
 }
 
 export interface AuditLog {

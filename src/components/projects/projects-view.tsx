@@ -5,8 +5,9 @@ import { Plus } from 'lucide-react';
 import { ProjectTable } from '@/components/projects/project-table';
 import { Button } from '@/components/ui/button';
 import { useProjects } from '@/hooks/use-projects';
-import { Project } from '@/services/project-service';
+import { Project, projectService } from '@/services/project-service';
 import { useRouter } from 'next/navigation';
+import toast from 'react-hot-toast';
 
 interface ProjectsViewProps {
   role: 'admin' | 'supervisor' | 'employee';
@@ -19,7 +20,8 @@ export function ProjectsView({ role }: ProjectsViewProps) {
     loading, 
     totalCount, 
     filters, 
-    updateFilters 
+    updateFilters,
+    refresh
   } = useProjects();
 
   const canCreate = ['admin', 'supervisor', 'employee'].includes(role);
@@ -45,6 +47,16 @@ export function ProjectsView({ role }: ProjectsViewProps) {
 
   const handlePageChange = (page: number) => {
     updateFilters({ page });
+  };
+  
+  const handleDelete = async (project: Project) => {
+    try {
+      await projectService.delete(project.id);
+      toast.success(`Project ${project.pid} deleted successfully`);
+      refresh();
+    } catch (error) {
+      toast.error('Failed to delete project');
+    }
   };
 
   return (
@@ -94,6 +106,7 @@ export function ProjectsView({ role }: ProjectsViewProps) {
         onFilterChange={(f) => updateFilters(f)}
         onSort={handleSort}
         onRowClick={handleRowClick}
+        onDelete={handleDelete}
       />
     </div>
   );

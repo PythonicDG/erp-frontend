@@ -34,16 +34,22 @@ const navItems: NavItem[] = [
     roles: ['ADMIN', 'SUPERVISOR', 'EMPLOYEE'],
   },
   {
-    label: 'Projects',
+    label: 'Project Master',
     href: '/projects',
     icon: <FolderKanban size={20} />,
     roles: ['ADMIN', 'SUPERVISOR', 'EMPLOYEE'],
   },
   {
-    label: 'Team',
+    label: 'User Master',
     href: '/team',
     icon: <Users size={20} />,
     roles: ['ADMIN', 'SUPERVISOR'],
+  },
+  {
+    label: 'Customer Masters',
+    href: '/customers',
+    icon: <Building2 size={20} />,
+    roles: ['ADMIN', 'SUPERVISOR', 'EMPLOYEE'],
   },
   {
     label: 'Workflow Design',
@@ -88,7 +94,7 @@ export function Sidebar({ userRole, isMobileOpen, onClose }: SidebarProps) {
         const data = await settingsService.getCompanyProfile();
         setProfile(data);
       } catch (error) {
-        console.error('Failed to load profile for sidebar');
+        // Silently fail, fallback to default ERP name
       }
     };
     fetchProfile();

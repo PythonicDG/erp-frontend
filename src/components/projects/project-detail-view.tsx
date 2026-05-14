@@ -174,6 +174,23 @@ export function ProjectDetailView({ id, role }: ProjectDetailViewProps) {
             .report-table th { background: #f1f5f9; text-align: left; padding: 10px; font-weight: 700; color: #475569; border: 1px solid #e2e8f0; }
             .report-table td { padding: 10px; border: 1px solid #e2e8f0; color: #1e293b; }
             
+            .watermark {
+              position: fixed;
+              top: 50%;
+              left: 50%;
+              transform: translate(-50%, -50%) rotate(-45deg);
+              font-size: 80px;
+              color: rgba(15, 23, 42, 0.1);
+              font-weight: 900;
+              pointer-events: none;
+              z-index: 1000;
+              white-space: nowrap;
+              text-transform: uppercase;
+              letter-spacing: 10px;
+            }
+            .watermark.pending { color: rgba(234, 179, 8, 0.15); }
+            .watermark.rejected { color: rgba(225, 29, 72, 0.15); }
+            
             .footer { position: fixed; bottom: 30px; left: 40px; right: 40px; border-top: 1px solid #e2e8f0; padding-top: 10px; display: flex; justify-content: space-between; font-size: 10px; color: #94a3b8; }
             
             @media print {
@@ -184,6 +201,8 @@ export function ProjectDetailView({ id, role }: ProjectDetailViewProps) {
           </style>
         </head>
         <body>
+          ${activeStage.status === 'Pending Approval' || activeStage.status === 'Submitted' ? '<div class="watermark pending">UNDER REVIEW</div>' : ''}
+          ${activeStage.status === 'Rejected' ? '<div class="watermark rejected">REJECTED</div>' : ''}
           <div class="header">
             <div class="logo-container">
               ${logoUrl ? `<img src="${logoUrl}" class="logo" />` : '<div style="font-size: 24px; font-weight: 800; color: #3b82f6;">ERP SYSTEM</div>'}
@@ -304,7 +323,15 @@ export function ProjectDetailView({ id, role }: ProjectDetailViewProps) {
         <div className="space-y-1">
           <div className="flex items-center gap-3">
             <h1 className="text-3xl font-bold text-slate-900 tracking-tight">{project.name}</h1>
-            <Badge variant={project.status === 'Closed' ? 'success' : 'info'}>{project.status}</Badge>
+            <Badge 
+              variant={
+                project.status === 'Closed' ? 'success' : 
+                project.status === 'Pending Approval' ? 'pending' :
+                project.status === 'Rejected' ? 'danger' : 'info'
+              }
+            >
+              {project.status === 'Pending Approval' ? 'Awaiting Supervisor Approval' : project.status}
+            </Badge>
           </div>
           <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-slate-500">
             <span className="font-mono font-bold text-blue-600">{project.pid}</span>
@@ -347,7 +374,9 @@ export function ProjectDetailView({ id, role }: ProjectDetailViewProps) {
                    'bg-slate-800/50 border-white/10 text-white/30'
                  }`}>
                    {stage.status === 'Approved' ? <CheckCircle2 className="h-5 w-5" /> : 
-                    stage.status === 'Locked' ? <Lock className="h-4 w-4" /> : <Clock className="h-5 w-5" />}
+                    stage.status === 'Locked' ? <Lock className="h-4 w-4" /> : 
+                    stage.status === 'Pending Approval' || stage.status === 'Submitted' ? <Clock className="h-5 w-5 animate-pulse" /> :
+                    <Clock className="h-5 w-5" />}
                  </div>
 
                  {/* The Stage Label */}
@@ -378,11 +407,17 @@ export function ProjectDetailView({ id, role }: ProjectDetailViewProps) {
                 <div className="flex items-center gap-3">
                   <Badge variant={
                     activeStage.status === 'Approved' ? 'success' : 
-                    activeStage.status === 'Submitted' ? 'warning' :
+                    activeStage.status === 'Pending Approval' || activeStage.status === 'Submitted' ? 'pending' :
                     activeStage.status === 'Rejected' ? 'danger' : 'info'
                   }>
-                    Status: {activeStage.status}
+                    {activeStage.status === 'Pending Approval' || activeStage.status === 'Submitted' ? 'Under Review' : activeStage.status}
                   </Badge>
+                  
+                  {activeStage.status === 'Pending Approval' && (
+                    <span className="text-[10px] font-bold text-slate-400 uppercase bg-slate-50 px-2 py-0.5 rounded border border-slate-100">
+                      Pending with: {activeStage.template_details.assigned_role === 'ADMIN' ? 'Administrator' : 'Supervisor'}
+                    </span>
+                  )}
                   
                   {(activeStage.status === 'Approved' || activeStage.status === 'Submitted') && (
                     <span className="text-xs text-slate-400 flex items-center gap-1">
@@ -416,6 +451,33 @@ export function ProjectDetailView({ id, role }: ProjectDetailViewProps) {
                     </div>
                   )}
 
+                  {/* 1. Project & Customer Details */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
+                      <div className="h-6 w-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold">1</div>
+                      <h3 className="font-bold text-slate-900 uppercase tracking-tight text-sm">Project & Customer Details</h3>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 bg-slate-50/50 p-4 rounded-xl border border-slate-100">
+                      <div className="space-y-1">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Customer Name</p>
+                        <p className="text-sm font-semibold text-slate-700">{project.customer_name}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Project Name</p>
+                        <p className="text-sm font-semibold text-slate-700">{project.name}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Customer Part Number</p>
+                        <p className="text-sm font-semibold text-slate-700">{project.customer_part_no || 'N/A'}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Project Type</p>
+                        <p className="text-sm font-semibold text-slate-700">{project.project_type}</p>
+                      </div>
+                    </div>
+                  </div>
+
                   <DynamicForm 
                     key={activeStage.id}
                     fields={activeStage.template_details.fields || []}
@@ -427,10 +489,10 @@ export function ProjectDetailView({ id, role }: ProjectDetailViewProps) {
                   />
 
                   {/* Supervisor Approval Actions */}
-                  {activeStage.status === 'Submitted' && canApprove && (
+                  {(activeStage.status === 'Pending Approval' || activeStage.status === 'Submitted') && canApprove && (
                     <div className="flex gap-3 pt-6 border-t border-slate-100">
-                      <Button variant="danger" onClick={handleReject} isLoading={actionLoading}>Reject Stage</Button>
-                      <Button onClick={handleApprove} isLoading={actionLoading} className="bg-emerald-600 hover:bg-emerald-700">Approve Stage</Button>
+                      <Button variant="danger" onClick={handleReject} loading={actionLoading}>Reject Stage</Button>
+                      <Button onClick={handleApprove} loading={actionLoading} className="bg-emerald-600 hover:bg-emerald-700">Approve Stage</Button>
                     </div>
                   )}
                 </div>

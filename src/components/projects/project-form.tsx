@@ -11,12 +11,14 @@ import { Select } from '@/components/ui/select';
 import { Card } from '@/components/ui/card';
 import { Project, projectService } from '@/services/project-service';
 import { workflowService, StageTemplate } from '@/services/workflow-service';
+import { customerService, Customer } from '@/services/customer-service';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 
 const projectSchema = z.object({
   name: z.string().min(3, 'Project name must be at least 3 characters'),
-  customer_name: z.string().min(2, 'Customer name is required'),
+  customer: z.string().min(1, 'Customer selection is required'),
+  customer_name: z.string().optional(),
   customer_part_no: z.string().optional(),
   pcepl_part_no: z.string().optional(),
   project_type: z.string().min(1, 'Project type is required'),
@@ -40,6 +42,10 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({ initialData, role }) =
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [templates, setTemplates] = useState<StageTemplate[]>([]);
+  const [customerSearch, setCustomerSearch] = useState(initialData?.customer_name || '');
+  const [customerResults, setCustomerResults] = useState<Customer[]>([]);
+  const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
+  const [isSearchingCustomers, setIsSearchingCustomers] = useState(false);
  
   useEffect(() => {
     const fetchTemplates = async () => {
@@ -48,11 +54,32 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({ initialData, role }) =
         const templatesList = Array.isArray(data) ? data : (data as any)?.results || [];
         setTemplates(templatesList.sort((a: any, b: any) => a.order - b.order));
       } catch (error) {
-        console.error('Failed to load templates');
+        toast.error('Failed to load templates');
       }
     };
     fetchTemplates();
   }, []);
+
+  // Customer search logic
+  useEffect(() => {
+    if (customerSearch.length >= 2) {
+      const timer = setTimeout(async () => {
+        setIsSearchingCustomers(true);
+        try {
+          const data = await customerService.getAll({ search: customerSearch });
+          setCustomerResults(Array.isArray(data) ? data : data.results || []);
+          setShowCustomerDropdown(true);
+        } catch (error) {
+          // Silently fail search
+        } finally {
+          setIsSearchingCustomers(false);
+        }
+      }, 300);
+      return () => clearTimeout(timer);
+    } else {
+      setShowCustomerDropdown(false);
+    }
+  }, [customerSearch]);
 
   const {
     register,
@@ -73,8 +100,17 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({ initialData, role }) =
       date_received: initialData?.date_received || new Date().toISOString().split('T')[0],
       target_completion_date: initialData?.target_completion_date || '',
       status: initialData?.status || 'Open',
+      customer: initialData?.customer || '',
     },
   });
+
+  const handleSelectCustomer = (customer: Customer) => {
+    setValue('customer', customer.id);
+    setValue('customer_name', customer.name);
+    setCustomerSearch(customer.name);
+    setShowCustomerDropdown(false);
+    toast.success(`Selected customer: ${customer.name}`, { icon: '🤝' });
+  };
 
   const formData = watch();
 
@@ -145,14 +181,14 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({ initialData, role }) =
             type="button" 
             variant="outline" 
             onClick={onSaveDraft}
-            isLoading={isDrafting}
+            loading={isDrafting}
           >
             <Save className="h-4 w-4 mr-2" />
             Save Draft
           </Button>
           <Button 
             type="submit" 
-            isLoading={isSubmitting}
+            loading={isSubmitting}
             className="shadow-blue-500/20 shadow-lg"
           >
             <Send className="h-4 w-4 mr-2" />
@@ -164,7 +200,7 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({ initialData, role }) =
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main Details */}
         <div className="lg:col-span-2 space-y-6">
-          <Card title="Project Information" subtitle="Basic details about the project">
+          <Card title="Project Information" subtitle="Basic details about the project" className="overflow-visible">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="md:col-span-2">
                 <Input
@@ -174,12 +210,53 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({ initialData, role }) =
                   error={errors.name?.message}
                 />
               </div>
-              <Input
-                label="Customer Name"
-                placeholder="e.g. WARTSILA INDIA LTD."
-                {...register('customer_name')}
-                error={errors.customer_name?.message}
-              />
+              <div className="relative space-y-2">
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Customer Name</label>
+                <div className="relative">
+                  <Input
+                    placeholder="Type to search customers..."
+                    value={customerSearch}
+                    onChange={(e) => {
+                      setCustomerSearch(e.target.value);
+                      if (e.target.value === '') setValue('customer', '');
+                    }}
+                    className={errors.customer ? 'border-rose-500' : ''}
+                  />
+                  {isSearchingCustomers && (
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                      <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
+                    </div>
+                  )}
+                </div>
+                {errors.customer && <p className="text-xs text-rose-500 font-bold uppercase tracking-tighter mt-1">{errors.customer.message}</p>}
+                
+                {showCustomerDropdown && customerResults.length > 0 && (
+                  <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className="p-2 bg-slate-50 border-b flex items-center justify-between">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Matching Customers</span>
+                      <span className="text-[10px] text-blue-600 font-bold uppercase">{customerResults.length} Found</span>
+                    </div>
+                    <div className="max-h-60 overflow-y-auto">
+                      {customerResults.map((c) => (
+                        <button
+                          key={c.id}
+                          type="button"
+                          className="w-full px-4 py-3 text-left hover:bg-blue-50 transition-colors flex items-center justify-between group"
+                          onClick={() => handleSelectCustomer(c)}
+                        >
+                          <div>
+                            <p className="text-sm font-bold text-slate-900 group-hover:text-blue-700">{c.name}</p>
+                            <p className="text-[10px] text-slate-400">{c.email} • {c.mobile_number}</p>
+                          </div>
+                          <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                            <span className="text-[10px] font-bold text-blue-600 bg-blue-100 px-2 py-1 rounded-md uppercase">Select</span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
               <Select
                 label="Project Type"
                 options={[
