@@ -14,6 +14,7 @@ import {
   Shield,
   UserCog,
   Briefcase,
+  Layers,
 } from 'lucide-react';
 import type { UserRole } from '@/types/auth';
 
@@ -44,6 +45,12 @@ const navItems: NavItem[] = [
     roles: ['ADMIN', 'SUPERVISOR'],
   },
   {
+    label: 'Workflow Design',
+    href: '/workflow',
+    icon: <Layers size={20} />,
+    roles: ['ADMIN'],
+  },
+  {
     label: 'Settings',
     href: '/settings',
     icon: <Settings size={20} />,
@@ -65,9 +72,11 @@ const roleLabels: Record<UserRole, string> = {
 
 interface SidebarProps {
   userRole: UserRole;
+  isMobileOpen?: boolean;
+  onClose?: () => void;
 }
 
-export function Sidebar({ userRole }: SidebarProps) {
+export function Sidebar({ userRole, isMobileOpen, onClose }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const pathname = usePathname();
 
@@ -75,10 +84,10 @@ export function Sidebar({ userRole }: SidebarProps) {
   const filteredItems = navItems.filter((item) => item.roles.includes(userRole));
 
   return (
-    <aside className={`sidebar ${collapsed ? 'sidebar-collapsed' : ''}`}>
+    <aside className={`sidebar ${collapsed ? 'sidebar-collapsed' : ''} ${isMobileOpen ? 'sidebar-mobile-open' : ''}`}>
       {/* Header */}
       <div className="sidebar-header">
-        <Link href={`${rolePrefix}/dashboard`} className="sidebar-logo">
+        <Link href={`${rolePrefix}/dashboard`} className="sidebar-logo" onClick={onClose}>
           <div className="sidebar-logo-icon">
             <Building2 size={22} strokeWidth={1.5} />
           </div>
@@ -120,6 +129,7 @@ export function Sidebar({ userRole }: SidebarProps) {
               href={href}
               className={`sidebar-nav-item ${isActive ? 'sidebar-nav-item-active' : ''}`}
               title={collapsed ? item.label : undefined}
+              onClick={onClose}
             >
               <span className="sidebar-nav-icon">{item.icon}</span>
               {!collapsed && <span className="sidebar-nav-label">{item.label}</span>}

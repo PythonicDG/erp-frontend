@@ -1,11 +1,15 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Bell, LogOut, Moon, Sun, User, ChevronDown } from 'lucide-react';
+import { Bell, LogOut, Moon, Sun, User, ChevronDown, Menu } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
 import { useAuth } from '@/hooks/use-auth';
 
-export function Navbar() {
+interface NavbarProps {
+  onMenuClick?: () => void;
+}
+
+export function Navbar({ onMenuClick }: NavbarProps) {
   const { user } = useAuthStore();
   const { logout } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -48,6 +52,13 @@ export function Navbar() {
   return (
     <header className="navbar">
       <div className="navbar-left">
+        <button 
+          className="navbar-icon-btn lg:hidden mr-4" 
+          onClick={onMenuClick}
+          aria-label="Open menu"
+        >
+          <Menu size={20} />
+        </button>
         <h2 className="navbar-greeting">
           {getGreeting()}, <span className="navbar-username">{user?.first_name || 'User'}</span>
         </h2>

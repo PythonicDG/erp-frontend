@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/auth-store';
 import { Sidebar } from '@/components/layout/sidebar';
@@ -41,30 +41,44 @@ export function DashboardShell({ children, requiredRole }: DashboardShellProps) 
     }
   }, [isLoading, isAuthenticated, user, requiredRole, router]);
 
-  if (isLoading || !user) {
-    return (
-      <div className="loading-screen">
-        <div className="loading-content">
-          <Loader2 className="loading-spinner" size={40} />
-          <p className="loading-text">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (user.role !== requiredRole) {
-    return null; // Will redirect via useEffect
-  }
-
-  return (
-    <div className="dashboard-layout">
-      <Sidebar userRole={user.role} />
-      <div className="dashboard-main">
-        <Navbar />
-        <main className="dashboard-content">
-          {children}
-        </main>
-      </div>
-    </div>
-  );
-}
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
+ 
+   if (isLoading || !user) {
+     return (
+       <div className="loading-screen">
+         <div className="loading-content">
+           <Loader2 className="loading-spinner" size={40} />
+           <p className="loading-text">Loading...</p>
+         </div>
+       </div>
+     );
+   }
+ 
+   if (user.role !== requiredRole) {
+     return null; // Will redirect via useEffect
+   }
+ 
+   return (
+     <div className="dashboard-layout">
+       <Sidebar 
+         userRole={user.role} 
+         isMobileOpen={isMobileOpen} 
+         onClose={() => setIsMobileOpen(false)} 
+       />
+       
+       {isMobileOpen && (
+         <div 
+           className="sidebar-overlay lg:hidden" 
+           onClick={() => setIsMobileOpen(false)} 
+         />
+       )}
+ 
+       <div className="dashboard-main">
+         <Navbar onMenuClick={() => setIsMobileOpen(true)} />
+         <main className="dashboard-content">
+           {children}
+         </main>
+       </div>
+     </div>
+   );
+ }
