@@ -3,14 +3,14 @@ import React from 'react';
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'outline' | 'danger' | 'ghost';
   size?: 'sm' | 'md' | 'lg' | 'icon';
-  isLoading?: boolean;
+  loading?: boolean;
 }
 
 export const Button: React.FC<ButtonProps> = ({
   children,
   variant = 'primary',
   size = 'md',
-  isLoading,
+  loading,
   className = '',
   disabled,
   ...props
@@ -35,10 +35,10 @@ export const Button: React.FC<ButtonProps> = ({
   return (
     <button
       className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${className}`}
-      disabled={disabled || isLoading}
+      disabled={disabled || loading}
       {...props}
     >
-      {isLoading ? (
+      {loading ? (
         <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
       ) : null}
       {children}

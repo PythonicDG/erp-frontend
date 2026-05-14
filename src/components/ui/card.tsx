@@ -19,7 +19,7 @@ export const Card: React.FC<CardProps> = ({
   return (
     <div 
       {...props}
-      className={`bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden ${className}`}
+      className={`rounded-xl ${!className.includes('overflow-') ? 'overflow-hidden' : ''} ${!className.includes('bg-') ? 'bg-white' : ''} ${!className.includes('border-') ? 'border border-slate-200' : ''} ${!className.includes('shadow-') ? 'shadow-sm' : ''} ${className}`}
     >
       {(title || subtitle) && (
         <div className="px-6 py-4 border-b border-slate-100">
