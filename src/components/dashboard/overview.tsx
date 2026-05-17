@@ -34,21 +34,59 @@ export function DashboardOverview() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Defaults to current year and current month
+  const currentYear = new Date().getFullYear().toString();
+  const currentMonth = (new Date().getMonth() + 1).toString();
+
+  const [selectedYear, setSelectedYear] = useState<string>(currentYear);
+  const [selectedMonth, setSelectedMonth] = useState<string>(currentMonth);
+
+  const years = [
+    { value: 'all', label: 'All Years' },
+    { value: '2024', label: '2024' },
+    { value: '2025', label: '2025' },
+    { value: '2026', label: '2026' },
+    { value: '2027', label: '2027' }
+  ];
+
+  const months = [
+    { value: 'all', label: 'All Months' },
+    { value: '1', label: 'January' },
+    { value: '2', label: 'February' },
+    { value: '3', label: 'March' },
+    { value: '4', label: 'April' },
+    { value: '5', label: 'May' },
+    { value: '6', label: 'June' },
+    { value: '7', label: 'July' },
+    { value: '8', label: 'August' },
+    { value: '9', label: 'September' },
+    { value: '10', label: 'October' },
+    { value: '11', label: 'November' },
+    { value: '12', label: 'December' }
+  ];
+
+  const fetchDashboard = async (yearVal: string, monthVal: string) => {
+    setIsRefreshing(true);
+    try {
+      const res = await dashboardService.getData({
+        year: yearVal === 'all' ? undefined : yearVal,
+        month: monthVal === 'all' ? undefined : monthVal
+      });
+      setData(res);
+    } catch (error) {
+      toast.error('Failed to load dashboard metrics');
+    } finally {
+      setLoading(false);
+      setIsRefreshing(false);
+    }
+  };
 
   useEffect(() => {
     setMounted(true);
-    const fetchDashboard = async () => {
-      try {
-        const res = await dashboardService.getData();
-        setData(res);
-      } catch (error) {
-        toast.error('Failed to load dashboard metrics');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchDashboard();
-  }, []);
+    fetchDashboard(selectedYear, selectedMonth);
+  }, [selectedYear, selectedMonth]);
 
   if (loading || !data) return <div className="p-20 text-center animate-pulse text-slate-500">Calculating analytics...</div>;
 
@@ -69,8 +107,64 @@ export function DashboardOverview() {
         </div>
       </div>
 
+      {/* Year-wise and Month-wise Dashboard Filters */}
+      <Card className="p-4 bg-slate-50/50 border-slate-200 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div className="flex items-center gap-2.5 text-slate-700 font-bold text-sm">
+          <Calendar className="h-4 w-4 text-blue-600" />
+          <span>Operational Dashboard Filter</span>
+        </div>
+        <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+          {/* Year Dropdown */}
+          <div className="w-full sm:w-40 relative">
+            <select
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(e.target.value)}
+              className="w-full h-10 px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-hidden transition-all shadow-xs cursor-pointer appearance-none pr-8"
+            >
+              {years.map((y) => (
+                <option key={y.value} value={y.value}>
+                  {y.label}
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+          </div>
+
+          {/* Month Dropdown */}
+          <div className="w-full sm:w-44 relative">
+            <select
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(e.target.value)}
+              className="w-full h-10 px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-hidden transition-all shadow-xs cursor-pointer appearance-none pr-8"
+            >
+              {months.map((m) => (
+                <option key={m.value} value={m.value}>
+                  {m.label}
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+          </div>
+
+          {/* Reset button */}
+          {(selectedYear !== 'all' || selectedMonth !== 'all') && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setSelectedYear('all');
+                setSelectedMonth('all');
+              }}
+              className="text-xs text-blue-600 hover:bg-blue-50 font-bold whitespace-nowrap"
+            >
+              Reset to All-time
+            </Button>
+          )}
+        </div>
+      </Card>
+
       {/* Quick Stats */}
-      <div className="stats-grid">
+      <div className={`stats-grid transition-opacity duration-300 ${isRefreshing ? 'opacity-50 pointer-events-none' : ''}`}>
         <StatCard 
           title="Total Projects" 
           value={data.stats.total} 
@@ -112,7 +206,7 @@ export function DashboardOverview() {
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className={`grid grid-cols-1 lg:grid-cols-3 gap-8 transition-opacity duration-300 ${isRefreshing ? 'opacity-50 pointer-events-none' : ''}`}>
         {/* Monthly Trend */}
         <Card className="lg:col-span-2 p-6 space-y-6">
           <div className="flex justify-between items-center">
@@ -182,7 +276,7 @@ export function DashboardOverview() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 gap-8">
+      <div className={`grid grid-cols-1 gap-8 transition-opacity duration-300 ${isRefreshing ? 'opacity-50 pointer-events-none' : ''}`}>
         {/* Recent Projects Table - Now Full Width */}
         <Card className="p-0 overflow-hidden shadow-sm border border-slate-200">
           <div className="p-6 border-b flex justify-between items-center bg-white">

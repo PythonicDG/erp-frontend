@@ -25,8 +25,8 @@ export interface DashboardData {
 }
 
 export const dashboardService = {
-  getData: async () => {
-    const response = await api.get<DashboardData>('/api/projects/dashboard/');
+  getData: async (params?: { year?: string; month?: string }) => {
+    const response = await api.get<DashboardData>('/api/projects/dashboard/', { params });
     return response.data;
   }
 };
