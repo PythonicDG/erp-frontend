@@ -29,6 +29,7 @@ export interface Project {
   pcepl_part_no: string;
   project_type: string;
   inspection_authority: string;
+  inspection_authority_fk?: number | string | null;
   applicable_standard: string;
   date_received: string;
   month_received: string;

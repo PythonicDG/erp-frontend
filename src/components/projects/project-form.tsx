@@ -13,6 +13,7 @@ import { Project, projectService } from '@/services/project-service';
 import { workflowService, StageTemplate } from '@/services/workflow-service';
 import { customerService, Customer } from '@/services/customer-service';
 import { standardsService, Standard } from '@/services/standards-service';
+import { inspectionAuthorityService, InspectionAuthority } from '@/services/inspection-authority-service';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 
@@ -24,6 +25,7 @@ const projectSchema = z.object({
   pcepl_part_no: z.string().optional(),
   project_type: z.string().min(1, 'Project type is required'),
   inspection_authority: z.string().optional(),
+  inspection_authority_fk: z.string().optional().nullable(),
   applicable_standard: z.string().optional(),
   date_received: z.string().min(1, 'Date received is required'),
   target_completion_date: z.string().optional().nullable(),
@@ -52,6 +54,11 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({ initialData, role }) =
   const [standards, setStandards] = useState<Standard[]>([]);
   const [standardSearch, setStandardSearch] = useState(initialData?.applicable_standard || '');
   const [showStandardDropdown, setShowStandardDropdown] = useState(false);
+
+  // Inspection Authorities dropdown state
+  const [authorities, setAuthorities] = useState<InspectionAuthority[]>([]);
+  const [authoritySearch, setAuthoritySearch] = useState(initialData?.inspection_authority || '');
+  const [showAuthorityDropdown, setShowAuthorityDropdown] = useState(false);
  
   useEffect(() => {
     const fetchTemplates = async () => {
@@ -79,6 +86,19 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({ initialData, role }) =
     fetchActiveStandards();
   }, []);
 
+  useEffect(() => {
+    const fetchActiveAuthorities = async () => {
+      try {
+        const data = await inspectionAuthorityService.getAll({ status: 'Active' });
+        const list = Array.isArray(data) ? data : data.results || [];
+        setAuthorities(list);
+      } catch (error) {
+        // Silently fail
+      }
+    };
+    fetchActiveAuthorities();
+  }, []);
+
   // Handle click outside to close dropdowns
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -89,6 +109,9 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({ initialData, role }) =
       if (!target.closest('.customers-dropdown-container')) {
         setShowCustomerDropdown(false);
       }
+      if (!target.closest('.authorities-dropdown-container')) {
+        setShowAuthorityDropdown(false);
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -97,6 +120,11 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({ initialData, role }) =
   const filteredStandards = standards.filter(std => 
     std.standard_number.toLowerCase().includes(standardSearch.toLowerCase()) ||
     std.standard_name.toLowerCase().includes(standardSearch.toLowerCase())
+  );
+
+  const filteredAuthorities = authorities.filter(auth => 
+    auth.authority_id.toLowerCase().includes(authoritySearch.toLowerCase()) ||
+    auth.name.toLowerCase().includes(authoritySearch.toLowerCase())
   );
 
   // Customer search logic
@@ -135,6 +163,7 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({ initialData, role }) =
       pcepl_part_no: initialData?.pcepl_part_no || '',
       project_type: initialData?.project_type || 'OTHER',
       inspection_authority: initialData?.inspection_authority || '',
+      inspection_authority_fk: initialData?.inspection_authority_fk?.toString() || '',
       applicable_standard: initialData?.applicable_standard || '',
       date_received: initialData?.date_received || new Date().toISOString().split('T')[0],
       target_completion_date: initialData?.target_completion_date || '',
@@ -335,12 +364,62 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({ initialData, role }) =
 
           <Card title="Technical Specifications" subtitle="Authorities and standards applicable" className="overflow-visible">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Input
-                label="Inspection Authority"
-                placeholder="e.g. Internal QA / LRS / BV"
-                {...register('inspection_authority')}
-                error={errors.inspection_authority?.message}
-              />
+              <div className="relative space-y-2 authorities-dropdown-container">
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Inspection Authority</label>
+                <div className="relative">
+                  <Input
+                    placeholder="Type to search active authorities..."
+                    value={authoritySearch}
+                    onChange={(e) => {
+                      setAuthoritySearch(e.target.value);
+                      setValue('inspection_authority_fk', null);
+                      setValue('inspection_authority', e.target.value);
+                    }}
+                    onFocus={() => setShowAuthorityDropdown(true)}
+                    className={errors.inspection_authority_fk ? 'border-rose-500' : ''}
+                  />
+                </div>
+                {errors.inspection_authority_fk && <p className="text-xs text-rose-500 font-bold uppercase tracking-tighter mt-1">{errors.inspection_authority_fk.message}</p>}
+                
+                {showAuthorityDropdown && filteredAuthorities.length > 0 && (
+                  <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className="p-2 bg-slate-50 border-b flex justify-between items-center">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Active Authorities</span>
+                      <button 
+                        type="button" 
+                        onClick={() => setShowAuthorityDropdown(false)} 
+                        className="text-[10px] text-blue-600 font-bold uppercase"
+                      >
+                        Close
+                      </button>
+                    </div>
+                    <div className="max-h-60 overflow-y-auto">
+                      {filteredAuthorities.map((auth) => (
+                        <button
+                          key={auth.id}
+                          type="button"
+                          className="w-full px-4 py-3 text-left hover:bg-blue-50/50 transition-colors flex items-center justify-between border-b last:border-0 border-slate-100 group"
+                          onClick={() => {
+                            setValue('inspection_authority_fk', auth.id.toString());
+                            setValue('inspection_authority', auth.name);
+                            setAuthoritySearch(auth.name);
+                            setShowAuthorityDropdown(false);
+                            toast.success(`Selected Authority: ${auth.name}`, { icon: '🛡️' });
+                          }}
+                        >
+                          <div>
+                            <span className="font-bold text-slate-900 block text-xs group-hover:text-blue-600 transition-colors">{auth.name}</span>
+                            <span className="text-[10px] text-slate-400 font-medium block mt-0.5 font-mono">{auth.authority_id}</span>
+                          </div>
+                          <span className="text-[9px] font-bold text-blue-600 bg-blue-50 border border-blue-100 px-1.5 py-0.5 rounded uppercase">
+                            {auth.category}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
               <div className="relative space-y-2 standards-dropdown-container">
                 <label className="block text-sm font-medium text-slate-700 mb-1.5">Applicable Standard</label>
                 <div className="relative">

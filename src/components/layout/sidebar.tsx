@@ -59,6 +59,12 @@ const navItems: NavItem[] = [
     roles: ['ADMIN'],
   },
   {
+    label: 'Inspection Authority Master',
+    href: '/inspection-authorities',
+    icon: <Shield size={20} />,
+    roles: ['ADMIN'],
+  },
+  {
     label: 'Workflow Design',
     href: '/workflow',
     icon: <Layers size={20} />,
