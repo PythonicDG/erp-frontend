@@ -101,6 +101,7 @@ export function DashboardOverview() {
           icon={<Users className="text-indigo-600" />} 
           trend="+3" 
           color="indigo"
+          onClick={() => router.push(user ? `/${user.role.toLowerCase()}/customers` : '/customers')}
         />
         <StatCard 
           title="Completion Rate" 
