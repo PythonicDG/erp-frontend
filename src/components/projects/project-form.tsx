@@ -105,7 +105,7 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({ initialData, role }) =
   });
 
   const handleSelectCustomer = (customer: Customer) => {
-    setValue('customer', customer.id);
+    setValue('customer', customer.id.toString());
     setValue('customer_name', customer.name);
     setCustomerSearch(customer.name);
     setShowCustomerDropdown(false);
