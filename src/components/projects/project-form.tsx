@@ -12,6 +12,7 @@ import { Card } from '@/components/ui/card';
 import { Project, projectService } from '@/services/project-service';
 import { workflowService, StageTemplate } from '@/services/workflow-service';
 import { customerService, Customer } from '@/services/customer-service';
+import { standardsService, Standard } from '@/services/standards-service';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 
@@ -46,6 +47,11 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({ initialData, role }) =
   const [customerResults, setCustomerResults] = useState<Customer[]>([]);
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
   const [isSearchingCustomers, setIsSearchingCustomers] = useState(false);
+
+  // Standards dropdown state
+  const [standards, setStandards] = useState<Standard[]>([]);
+  const [standardSearch, setStandardSearch] = useState(initialData?.applicable_standard || '');
+  const [showStandardDropdown, setShowStandardDropdown] = useState(false);
  
   useEffect(() => {
     const fetchTemplates = async () => {
@@ -59,6 +65,39 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({ initialData, role }) =
     };
     fetchTemplates();
   }, []);
+
+  useEffect(() => {
+    const fetchActiveStandards = async () => {
+      try {
+        const data = await standardsService.getAll({ status: 'Active' });
+        const list = Array.isArray(data) ? data : data.results || [];
+        setStandards(list);
+      } catch (error) {
+        // Silently fail
+      }
+    };
+    fetchActiveStandards();
+  }, []);
+
+  // Handle click outside to close dropdowns
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('.standards-dropdown-container')) {
+        setShowStandardDropdown(false);
+      }
+      if (!target.closest('.customers-dropdown-container')) {
+        setShowCustomerDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const filteredStandards = standards.filter(std => 
+    std.standard_number.toLowerCase().includes(standardSearch.toLowerCase()) ||
+    std.standard_name.toLowerCase().includes(standardSearch.toLowerCase())
+  );
 
   // Customer search logic
   useEffect(() => {
@@ -210,7 +249,7 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({ initialData, role }) =
                   error={errors.name?.message}
                 />
               </div>
-              <div className="relative space-y-2">
+              <div className="relative space-y-2 customers-dropdown-container">
                 <label className="block text-sm font-medium text-slate-700 mb-1.5">Customer Name</label>
                 <div className="relative">
                   <Input
@@ -294,7 +333,7 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({ initialData, role }) =
             </div>
           </Card>
 
-          <Card title="Technical Specifications" subtitle="Authorities and standards applicable">
+          <Card title="Technical Specifications" subtitle="Authorities and standards applicable" className="overflow-visible">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Input
                 label="Inspection Authority"
@@ -302,12 +341,60 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({ initialData, role }) =
                 {...register('inspection_authority')}
                 error={errors.inspection_authority?.message}
               />
-              <Input
-                label="Applicable Standard"
-                placeholder="e.g. IEC 61439"
-                {...register('applicable_standard')}
-                error={errors.applicable_standard?.message}
-              />
+              <div className="relative space-y-2 standards-dropdown-container">
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Applicable Standard</label>
+                <div className="relative">
+                  <Input
+                    placeholder="Type to search active standards..."
+                    value={standardSearch}
+                    onChange={(e) => {
+                      setStandardSearch(e.target.value);
+                      setValue('applicable_standard', e.target.value);
+                    }}
+                    onFocus={() => setShowStandardDropdown(true)}
+                    className={errors.applicable_standard ? 'border-rose-500' : ''}
+                  />
+                </div>
+                {errors.applicable_standard && <p className="text-xs text-rose-500 font-bold uppercase tracking-tighter mt-1">{errors.applicable_standard.message}</p>}
+                
+                {showStandardDropdown && filteredStandards.length > 0 && (
+                  <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className="p-2 bg-slate-50 border-b flex justify-between items-center">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Active Standards</span>
+                      <button 
+                        type="button" 
+                        onClick={() => setShowStandardDropdown(false)} 
+                        className="text-[10px] text-blue-600 font-bold uppercase"
+                      >
+                        Close
+                      </button>
+                    </div>
+                    <div className="max-h-60 overflow-y-auto">
+                      {filteredStandards.map((std) => (
+                        <button
+                          key={std.id}
+                          type="button"
+                          className="w-full px-4 py-3 text-left hover:bg-blue-50/50 transition-colors flex items-center justify-between border-b last:border-0 border-slate-100 group"
+                          onClick={() => {
+                            setValue('applicable_standard', std.standard_number);
+                            setStandardSearch(std.standard_number);
+                            setShowStandardDropdown(false);
+                            toast.success(`Selected Standard: ${std.standard_number}`, { icon: '📜' });
+                          }}
+                        >
+                          <div>
+                            <span className="font-bold text-slate-900 block text-xs group-hover:text-blue-600 transition-colors">{std.standard_number}</span>
+                            <span className="text-[10px] text-slate-400 font-medium block mt-0.5 line-clamp-1">{std.standard_name}</span>
+                          </div>
+                          <span className="text-[9px] font-bold text-blue-600 bg-blue-50 border border-blue-100 px-1.5 py-0.5 rounded uppercase font-mono">
+                            {std.category}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </Card>
         </div>

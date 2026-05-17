@@ -15,6 +15,7 @@ import {
   UserCog,
   Briefcase,
   Layers,
+  BookOpen,
 } from 'lucide-react';
 import type { UserRole } from '@/types/auth';
 import { settingsService, CompanyProfile } from '@/services/settings-service';
@@ -50,6 +51,12 @@ const navItems: NavItem[] = [
     href: '/customers',
     icon: <Building2 size={20} />,
     roles: ['ADMIN', 'SUPERVISOR', 'EMPLOYEE'],
+  },
+  {
+    label: 'Standards Master',
+    href: '/standards',
+    icon: <BookOpen size={20} />,
+    roles: ['ADMIN'],
   },
   {
     label: 'Workflow Design',
