@@ -6,11 +6,14 @@ import { CustomerForm } from '@/components/admin/customers/customer-form';
 import { customerService, Customer } from '@/services/customer-service';
 import toast from 'react-hot-toast';
 
+import { CustomerBulkUploadModal } from '@/components/admin/customers/customer-bulk-upload-modal';
+
 export function CustomerMasterView() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
 
@@ -84,6 +87,7 @@ export function CustomerMasterView() {
       <CustomerTable 
         customers={customers}
         onAdd={handleAdd}
+        onBulkUpload={() => setIsBulkUploadOpen(true)}
         onEdit={handleEdit}
         onDelete={handleDelete}
         searchQuery={searchQuery}
@@ -98,6 +102,12 @@ export function CustomerMasterView() {
           isLoading={actionLoading}
         />
       )}
+
+      <CustomerBulkUploadModal 
+        isOpen={isBulkUploadOpen}
+        onClose={() => setIsBulkUploadOpen(false)}
+        onSuccess={fetchCustomers}
+      />
     </div>
   );
 }

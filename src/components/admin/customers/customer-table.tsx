@@ -9,7 +9,8 @@ import {
   Mail, 
   Phone, 
   MoreHorizontal,
-  UserCheck
+  UserCheck,
+  Upload
 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -21,6 +22,7 @@ interface CustomerTableProps {
   onEdit: (customer: Customer) => void;
   onDelete: (id: string) => void;
   onAdd: () => void;
+  onBulkUpload?: () => void;
   searchQuery: string;
   onSearchChange: (query: string) => void;
 }
@@ -30,6 +32,7 @@ export const CustomerTable: React.FC<CustomerTableProps> = ({
   onEdit,
   onDelete,
   onAdd,
+  onBulkUpload,
   searchQuery,
   onSearchChange,
 }) => {
@@ -51,6 +54,15 @@ export const CustomerTable: React.FC<CustomerTableProps> = ({
               onChange={(e) => onSearchChange(e.target.value)}
             />
           </div>
+          {onBulkUpload && (
+            <Button 
+              variant="outline"
+              onClick={onBulkUpload} 
+              className="border-slate-200 text-slate-600 hover:bg-slate-50 shadow-sm"
+            >
+              <Upload className="h-4 w-4 mr-2 text-slate-500" /> Bulk Upload
+            </Button>
+          )}
           <Button onClick={onAdd} className="bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-500/20">
             <Plus className="h-4 w-4 mr-2" /> Add Customer
           </Button>

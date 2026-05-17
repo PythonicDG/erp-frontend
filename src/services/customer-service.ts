@@ -41,5 +41,24 @@ export const customerService = {
   search: async (query: string) => {
     const response = await api.get('/api/projects/customers/', { params: { search: query } });
     return response.data;
-  }
+  },
+
+  bulkUpload: async (file: File, skipDuplicates: boolean) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('skip_duplicates', String(skipDuplicates));
+    const response = await api.post('/api/projects/customers/bulk-upload/', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
+
+  downloadTemplate: async () => {
+    const response = await api.get('/api/projects/customers/download-template/', {
+      responseType: 'blob',
+    });
+    return response.data;
+  },
 };

@@ -260,10 +260,16 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({ initialData, role }) =
               <Select
                 label="Project Type"
                 options={[
-                  { label: 'Standard', value: 'STANDARD' },
-                  { label: 'Custom', value: 'CUSTOM' },
-                  { label: 'Maintenance', value: 'MAINTENANCE' },
-                  { label: 'Other', value: 'OTHER' },
+                  { label: 'OTHER', value: 'OTHER' },
+                  { label: 'LCP', value: 'LCP' },
+                  { label: 'EWH', value: 'EWH' },
+                  { label: 'RCP', value: 'RCP' },
+                  { label: 'SP', value: 'SP' },
+                  { label: 'AWH', value: 'AWH' },
+                  { label: 'JB', value: 'JB' },
+                  { label: 'BATTERY CABLE', value: 'BATTERY CABLE' },
+                  { label: 'DROP IN PLATE', value: 'DROP IN PLATE' },
+                  { label: 'BATTERY BOX', value: 'BATTERY BOX' },
                 ]}
                 {...register('project_type')}
                 error={errors.project_type?.message}

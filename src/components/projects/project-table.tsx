@@ -225,9 +225,16 @@ export const ProjectTable: React.FC<ProjectTableProps> = ({
                 onChange={(e) => setLocalFilters({...localFilters, project_type: e.target.value})}
               >
                 <option value="">All Types</option>
-                <option value="New Product Development">New Product Development</option>
-                <option value="Process Improvement">Process Improvement</option>
-                <option value="Maintenance">Maintenance</option>
+                <option value="OTHER">OTHER</option>
+                <option value="LCP">LCP</option>
+                <option value="EWH">EWH</option>
+                <option value="RCP">RCP</option>
+                <option value="SP">SP</option>
+                <option value="AWH">AWH</option>
+                <option value="JB">JB</option>
+                <option value="BATTERY CABLE">BATTERY CABLE</option>
+                <option value="DROP IN PLATE">DROP IN PLATE</option>
+                <option value="BATTERY BOX">BATTERY BOX</option>
               </select>
             </div>
             <div className="flex gap-2 pt-2">
