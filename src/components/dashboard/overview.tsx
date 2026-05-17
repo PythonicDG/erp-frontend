@@ -22,6 +22,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { dashboardService, DashboardData } from '@/services/dashboard-service';
 import { useRouter } from 'next/navigation';
+import { useAuthStore } from '@/store/auth-store';
 import api from '@/lib/axios';
 import toast from 'react-hot-toast';
 
@@ -29,6 +30,7 @@ const COLORS = ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981'];
 
 export function DashboardOverview() {
   const router = useRouter();
+  const { user } = useAuthStore();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -49,13 +51,13 @@ export function DashboardOverview() {
   if (loading || !data) return <div className="p-20 text-center animate-pulse text-slate-500">Calculating analytics...</div>;
 
   return (
-    <div className="p-8 max-w-7xl mx-auto space-y-8">
-      <div className="flex justify-between items-end">
+    <div className="p-4 sm:p-6 md:p-8 max-w-7xl mx-auto space-y-6 sm:space-y-8">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Executive Dashboard</h1>
-          <p className="text-slate-500">Real-time operational metrics and system overview.</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">Executive Dashboard</h1>
+          <p className="text-sm text-slate-500">Real-time operational metrics and system overview.</p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-2.5">
           <Badge variant="outline" className="bg-white border-slate-200 text-slate-600 px-3 py-1">
              <Calendar className="h-3 w-3 mr-1.5" /> FY {data.system_info.financial_year}
           </Badge>
@@ -73,7 +75,7 @@ export function DashboardOverview() {
           icon={<Layers className="text-blue-600" />} 
           trend="+12%" 
           color="blue"
-          onClick={() => router.push('/admin/projects')}
+          onClick={() => router.push(user ? `/${user.role.toLowerCase()}/projects` : '/projects')}
         />
         <StatCard 
           title="Open Projects" 
@@ -81,7 +83,7 @@ export function DashboardOverview() {
           icon={<Clock className="text-amber-600" />} 
           trend="-2" 
           color="amber"
-          onClick={() => router.push('/admin/dashboard/open')}
+          onClick={() => router.push(user ? `/${user.role.toLowerCase()}/dashboard/open` : '/dashboard/open')}
         />
         <StatCard 
           title="Closed Projects" 
@@ -89,7 +91,7 @@ export function DashboardOverview() {
           icon={<CheckCircle2 className="text-emerald-600" />} 
           trend="+5%" 
           color="emerald"
-          onClick={() => router.push('/admin/dashboard/closed')}
+          onClick={() => router.push(user ? `/${user.role.toLowerCase()}/dashboard/closed` : '/dashboard/closed')}
         />
         <StatCard 
           title="Active Customers" 
@@ -181,7 +183,12 @@ export function DashboardOverview() {
               <h3 className="font-bold text-slate-900">Recent Projects</h3>
               <p className="text-xs text-slate-500 mt-1">Live tracking of the latest projects and their current workflow status.</p>
             </div>
-            <button className="text-xs font-bold text-blue-600 hover:underline px-4 py-2 bg-blue-50 rounded-lg">View All Projects</button>
+            <button 
+              className="text-xs font-bold text-blue-600 hover:underline px-4 py-2 bg-blue-50 rounded-lg"
+              onClick={() => router.push(user ? `/${user.role.toLowerCase()}/projects` : '/projects')}
+            >
+              View All Projects
+            </button>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm text-left">

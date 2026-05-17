@@ -55,14 +55,14 @@ export function OpenProjectsDashboard() {
   );
 
   return (
-    <div className="p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => router.push('/admin/dashboard')}>
+    <div className="p-4 sm:p-6 md:p-8 max-w-7xl mx-auto space-y-6 sm:space-y-8 animate-in fade-in duration-500">
+      <div className="flex items-start sm:items-center gap-3 sm:gap-4">
+        <Button variant="ghost" size="icon" className="mt-1 sm:mt-0 flex-shrink-0" onClick={() => router.push('/admin/dashboard')}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div>
-          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Open Projects Dashboard</h1>
-          <p className="text-slate-500">Live monitoring of projects currently in the workflow pipeline.</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">Open Projects Dashboard</h1>
+          <p className="text-sm text-slate-500">Live monitoring of projects currently in the workflow pipeline.</p>
         </div>
       </div>
 
@@ -122,14 +122,14 @@ export function OpenProjectsDashboard() {
 
       {/* Interactive Table with Filters */}
       <Card className="p-0 overflow-hidden shadow-sm border border-slate-200">
-        <div className="p-6 border-b bg-white space-y-4">
-          <div className="flex justify-between items-center">
+        <div className="p-4 sm:p-6 border-b bg-white space-y-4">
+          <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
             <h3 className="font-bold text-slate-900">Project List (Filtered)</h3>
-            <div className="flex gap-2">
-               <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+               <div className="flex items-center gap-2 w-full sm:w-auto justify-between">
                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">Filter by Stage:</span>
                  <select 
-                    className="h-9 px-3 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all font-medium text-slate-700"
+                    className="h-9 px-3 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all font-medium text-slate-700 w-full sm:w-auto"
                     value={selectedStage}
                     onChange={(e) => setSelectedStage(e.target.value)}
                  >

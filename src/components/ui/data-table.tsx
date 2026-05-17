@@ -171,8 +171,8 @@ export function DataTable<T extends { id: string | number }>({
 
         {/* Pagination */}
         {onPageChange && totalCount > pageSize && (
-          <div className="px-6 py-4 bg-slate-50/50 border-t border-slate-200 flex items-center justify-between">
-            <div className="text-sm text-slate-500">
+          <div className="px-6 py-4 bg-slate-50/50 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="text-sm text-slate-500 text-center sm:text-left">
               Showing <span className="font-medium text-slate-900">{(currentPage - 1) * pageSize + 1}</span> to{' '}
               <span className="font-medium text-slate-900">
                 {Math.min(currentPage * pageSize, totalCount)}

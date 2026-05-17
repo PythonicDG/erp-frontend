@@ -53,14 +53,14 @@ export function ClosedProjectsDashboard() {
   );
 
   return (
-    <div className="p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => router.push('/admin/dashboard')}>
+    <div className="p-4 sm:p-6 md:p-8 max-w-7xl mx-auto space-y-6 sm:space-y-8 animate-in fade-in duration-500">
+      <div className="flex items-start sm:items-center gap-3 sm:gap-4">
+        <Button variant="ghost" size="icon" className="mt-1 sm:mt-0 flex-shrink-0" onClick={() => router.push('/admin/dashboard')}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div>
-          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Success Analytics</h1>
-          <p className="text-slate-500">Review historical performance and completed project trends.</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">Success Analytics</h1>
+          <p className="text-sm text-slate-500">Review historical performance and completed project trends.</p>
         </div>
       </div>
 
@@ -154,15 +154,15 @@ export function ClosedProjectsDashboard() {
 
       {/* Historical Record Table */}
       <Card className="p-0 overflow-hidden shadow-sm border border-slate-200">
-        <div className="p-6 border-b bg-white flex justify-between items-center">
+        <div className="p-4 sm:p-6 border-b bg-white flex flex-col sm:flex-row justify-between sm:items-center gap-4">
           <h3 className="font-bold text-slate-900">Closed Project Registry</h3>
-          <div className="flex gap-2">
-             <div className="relative">
+          <div className="flex gap-2 w-full sm:w-auto">
+             <div className="relative w-full sm:w-64">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <input 
                   type="text" 
                   placeholder="Search history..." 
-                  className="pl-10 pr-4 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-emerald-500/20"
+                  className="w-full pl-10 pr-4 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-emerald-500/20"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
