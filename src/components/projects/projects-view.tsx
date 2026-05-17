@@ -1,7 +1,8 @@
 'use client';
 
 import React from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, Upload } from 'lucide-react';
+import { ProjectBulkUploadModal } from '@/components/projects/project-bulk-upload-modal';
 import { ProjectTable } from '@/components/projects/project-table';
 import { Button } from '@/components/ui/button';
 import { useProjects } from '@/hooks/use-projects';
@@ -15,6 +16,7 @@ interface ProjectsViewProps {
 
 export function ProjectsView({ role }: ProjectsViewProps) {
   const router = useRouter();
+  const [isUploadOpen, setIsUploadOpen] = React.useState(false);
   const { 
     projects, 
     loading, 
@@ -70,13 +72,23 @@ export function ProjectsView({ role }: ProjectsViewProps) {
           </p>
         </div>
         {canCreate && (
-          <Button 
-            className="shadow-blue-500/20 shadow-lg"
-            onClick={() => router.push(`/${role}/projects/new`)}
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Create New Project
-          </Button>
+          <div className="flex flex-wrap items-center gap-3">
+            <Button 
+              variant="outline"
+              className="border-slate-300 text-slate-700 hover:bg-slate-50 shadow-sm"
+              onClick={() => setIsUploadOpen(true)}
+            >
+              <Upload className="h-4 w-4 mr-2" />
+              Bulk Upload
+            </Button>
+            <Button 
+              className="shadow-blue-500/20 shadow-lg"
+              onClick={() => router.push(`/${role}/projects/new`)}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Create New Project
+            </Button>
+          </div>
         )}
       </div>
 
@@ -95,7 +107,6 @@ export function ProjectsView({ role }: ProjectsViewProps) {
         ))}
       </div>
 
-      {/* Main Table Section */}
       <ProjectTable
         projects={projects}
         loading={loading}
@@ -107,6 +118,12 @@ export function ProjectsView({ role }: ProjectsViewProps) {
         onSort={handleSort}
         onRowClick={handleRowClick}
         onDelete={handleDelete}
+      />
+
+      <ProjectBulkUploadModal 
+        isOpen={isUploadOpen}
+        onClose={() => setIsUploadOpen(false)}
+        onSuccess={refresh}
       />
     </div>
   );
