@@ -165,7 +165,7 @@ export function TeamManagementView() {
             header: "Status", 
             cell: (m) => (
               <button onClick={() => toggleStatus(m)} className="cursor-pointer">
-                <Badge variant={m.is_active ? 'success' : 'secondary'} className="px-2.5">
+                <Badge variant={m.is_active ? 'success' : 'outline'} className="px-2.5">
                   {m.is_active ? 'Active' : 'Inactive'}
                 </Badge>
               </button>

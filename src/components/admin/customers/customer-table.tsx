@@ -93,7 +93,7 @@ export const CustomerTable: React.FC<CustomerTableProps> = ({
                   </div>
                 </td>
                 <td className="px-6 py-4">
-                  <Badge variant="secondary" className="bg-blue-50 text-blue-600 border-blue-100 font-bold">
+                  <Badge variant="info" className="bg-blue-50 text-blue-600 border-blue-100 font-bold">
                     {customer.category || 'General'}
                   </Badge>
                 </td>

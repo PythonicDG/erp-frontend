@@ -201,7 +201,7 @@ export function ProjectDetailView({ id, role }: ProjectDetailViewProps) {
           </style>
         </head>
         <body>
-          ${activeStage.status === 'Pending Approval' || activeStage.status === 'Submitted' ? '<div class="watermark pending">UNDER REVIEW</div>' : ''}
+          ${activeStage.status === 'Submitted' ? '<div class="watermark pending">UNDER REVIEW</div>' : ''}
           ${activeStage.status === 'Rejected' ? '<div class="watermark rejected">REJECTED</div>' : ''}
           <div class="header">
             <div class="logo-container">
@@ -375,7 +375,7 @@ export function ProjectDetailView({ id, role }: ProjectDetailViewProps) {
                  }`}>
                    {stage.status === 'Approved' ? <CheckCircle2 className="h-5 w-5" /> : 
                     stage.status === 'Locked' ? <Lock className="h-4 w-4" /> : 
-                    stage.status === 'Pending Approval' || stage.status === 'Submitted' ? <Clock className="h-5 w-5 animate-pulse" /> :
+                    stage.status === 'Submitted' ? <Clock className="h-5 w-5 animate-pulse" /> :
                     <Clock className="h-5 w-5" />}
                  </div>
 
@@ -407,13 +407,13 @@ export function ProjectDetailView({ id, role }: ProjectDetailViewProps) {
                 <div className="flex items-center gap-3">
                   <Badge variant={
                     activeStage.status === 'Approved' ? 'success' : 
-                    activeStage.status === 'Pending Approval' || activeStage.status === 'Submitted' ? 'pending' :
+                    activeStage.status === 'Submitted' ? 'pending' :
                     activeStage.status === 'Rejected' ? 'danger' : 'info'
                   }>
-                    {activeStage.status === 'Pending Approval' || activeStage.status === 'Submitted' ? 'Under Review' : activeStage.status}
+                    {activeStage.status === 'Submitted' ? 'Under Review' : activeStage.status}
                   </Badge>
                   
-                  {activeStage.status === 'Pending Approval' && (
+                  {activeStage.status === 'Submitted' && (
                     <span className="text-[10px] font-bold text-slate-400 uppercase bg-slate-50 px-2 py-0.5 rounded border border-slate-100">
                       Pending with: {activeStage.template_details.assigned_role === 'ADMIN' ? 'Administrator' : 'Supervisor'}
                     </span>
@@ -489,7 +489,7 @@ export function ProjectDetailView({ id, role }: ProjectDetailViewProps) {
                   />
 
                   {/* Supervisor Approval Actions */}
-                  {(activeStage.status === 'Pending Approval' || activeStage.status === 'Submitted') && canApprove && (
+                  {activeStage.status === 'Submitted' && canApprove && (
                     <div className="flex gap-3 pt-6 border-t border-slate-100">
                       <Button variant="danger" onClick={handleReject} loading={actionLoading}>Reject Stage</Button>
                       <Button onClick={handleApprove} loading={actionLoading} className="bg-emerald-600 hover:bg-emerald-700">Approve Stage</Button>

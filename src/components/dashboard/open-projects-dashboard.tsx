@@ -174,7 +174,7 @@ export function OpenProjectsDashboard() {
                   </td>
                   <td className="px-6 py-4 text-slate-500 font-medium">{p.customer_name}</td>
                   <td className="px-6 py-4">
-                     <Badge variant="secondary" className="bg-slate-100 text-slate-700 font-bold">
+                     <Badge variant="outline" className="bg-slate-100 text-slate-700 font-bold">
                        {p.current_stage}
                      </Badge>
                   </td>

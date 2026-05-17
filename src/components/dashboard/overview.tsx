@@ -112,7 +112,7 @@ export function DashboardOverview() {
         <Card className="lg:col-span-2 p-6 space-y-6">
           <div className="flex justify-between items-center">
             <h3 className="font-bold text-slate-900">Project Intake Trend</h3>
-            <Badge variant="secondary" className="text-[10px]">Monthly Data</Badge>
+            <Badge variant="outline" className="text-[10px]">Monthly Data</Badge>
           </div>
           <div className="h-80 w-full min-h-[320px]">
             <ResponsiveContainer width="100%" height="100%" minWidth={0}>

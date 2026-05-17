@@ -26,7 +26,7 @@ const projectSchema = z.object({
   applicable_standard: z.string().optional(),
   date_received: z.string().min(1, 'Date received is required'),
   target_completion_date: z.string().optional().nullable(),
-  status: z.enum(['Draft', 'Open', 'In Progress', 'Closed', 'Rejected']).default('Open'),
+  status: z.enum(['Draft', 'Open', 'In Progress', 'Closed', 'Rejected', 'Pending Approval']).default('Open'),
 });
 
 type ProjectFormData = z.infer<typeof projectSchema>;
@@ -88,7 +88,7 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({ initialData, role }) =
     setValue,
     formState: { errors, isDirty },
   } = useForm<ProjectFormData>({
-    resolver: zodResolver(projectSchema),
+    resolver: zodResolver(projectSchema) as any,
     defaultValues: {
       name: initialData?.name || '',
       customer_name: initialData?.customer_name || '',
@@ -100,7 +100,7 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({ initialData, role }) =
       date_received: initialData?.date_received || new Date().toISOString().split('T')[0],
       target_completion_date: initialData?.target_completion_date || '',
       status: initialData?.status || 'Open',
-      customer: initialData?.customer || '',
+      customer: initialData?.customer?.toString() || '',
     },
   });
 

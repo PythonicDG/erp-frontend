@@ -1,6 +1,6 @@
 import api from '@/lib/axios';
 
-export type ProjectStatus = 'Draft' | 'Open' | 'In Progress' | 'Closed' | 'Rejected';
+export type ProjectStatus = 'Draft' | 'Open' | 'In Progress' | 'Closed' | 'Rejected' | 'Pending Approval';
 export type StageStatus = 'Locked' | 'Unlocked' | 'Completed';
 
 export interface WorkflowStage {
@@ -39,6 +39,8 @@ export interface Project {
   created_by_name: string;
   stages?: WorkflowStage[];
   activities?: ActivityLog[];
+  current_stage?: string;
+  customer?: number | string;
 }
 
 export interface ProjectFilters {

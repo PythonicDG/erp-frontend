@@ -17,6 +17,7 @@ import {
   FilterX
 } from 'lucide-react';
 import { settingsService, AuditLog } from '@/services/settings-service';
+import toast from 'react-hot-toast';
 
 export function AuditLogs() {
   const [search, setSearch] = useState('');

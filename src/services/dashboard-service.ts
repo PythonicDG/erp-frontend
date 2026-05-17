@@ -12,6 +12,7 @@ export interface DashboardData {
   charts: {
     type_distribution: { project_type: string; count: number }[];
     monthly_trend: { month: string; count: number }[];
+    stage_distribution: { name: string; count: number }[];
   };
   recent_projects: Project[];
   system_info: {

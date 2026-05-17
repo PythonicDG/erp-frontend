@@ -79,7 +79,7 @@ export function WorkflowManagementView() {
                <div className="flex-1 space-y-1">
                  <div className="flex items-center gap-3">
                    <h3 className="font-bold text-slate-900 text-lg">{template.name}</h3>
-                   <Badge variant={template.is_active ? 'success' : 'secondary'}>
+                   <Badge variant={template.is_active ? 'success' : 'outline'}>
                      {template.is_active ? 'Active' : 'Disabled'}
                    </Badge>
                    {template.approval_required && <Badge variant="info" className="bg-amber-50 text-amber-600 border-amber-100">Approval Required</Badge>}
