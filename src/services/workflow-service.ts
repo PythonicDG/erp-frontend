@@ -52,7 +52,7 @@ export interface StageSubmission {
 export interface StageInstance {
   id: number;
   template_details: StageTemplate;
-  status: 'Locked' | 'Unlocked' | 'In Progress' | 'Submitted' | 'Approved' | 'Rejected';
+  status: 'Locked' | 'Unlocked' | 'In Progress' | 'Submitted' | 'Pending Approval' | 'Under Review' | 'Approved' | 'Rejected';
   order: number;
   unlocked_at: string | null;
   completed_at: string | null;

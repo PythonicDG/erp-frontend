@@ -55,7 +55,7 @@ export function ProjectDetailView({ id, role }: ProjectDetailViewProps) {
       setCompanyProfile(companyData);
       
       // Default to the first unlocked or in-progress stage
-      const current = stagesList.find((s: any) => s.status === 'Unlocked' || s.status === 'Submitted' || s.status === 'Rejected' || s.status === 'In Progress') 
+      const current = stagesList.find((s: any) => s.status === 'Unlocked' || s.status === 'Submitted' || s.status === 'Pending Approval' || s.status === 'Rejected' || s.status === 'In Progress') 
                      || stagesList.find((s: any) => s.status === 'Approved' && s.order === stagesList.length)
                      || stagesList[0];
       setActiveStage(current || null);
@@ -201,7 +201,7 @@ export function ProjectDetailView({ id, role }: ProjectDetailViewProps) {
           </style>
         </head>
         <body>
-          ${activeStage.status === 'Submitted' ? '<div class="watermark pending">UNDER REVIEW</div>' : ''}
+          ${(activeStage.status === 'Submitted' || activeStage.status === 'Pending Approval') ? '<div class="watermark pending">UNDER REVIEW</div>' : ''}
           ${activeStage.status === 'Rejected' ? '<div class="watermark rejected">REJECTED</div>' : ''}
           <div class="header">
             <div class="logo-container">
@@ -341,13 +341,13 @@ export function ProjectDetailView({ id, role }: ProjectDetailViewProps) {
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-           <Button variant="outline" size="sm" onClick={handlePrintStage} disabled={!activeStage || (activeStage.status !== 'Approved' && activeStage.status !== 'Submitted')}>
+           <Button variant="outline" size="sm" onClick={handlePrintStage} disabled={!activeStage || (activeStage.status !== 'Approved' && activeStage.status !== 'Submitted' && activeStage.status !== 'Pending Approval')}>
               <Printer className="h-4 w-4 mr-2" /> Print Form
            </Button>
            <Button variant="outline" size="sm" onClick={handlePrintFullReport} className="text-indigo-600 border-indigo-200 hover:bg-indigo-50">
               <FileText className="h-4 w-4 mr-2" /> Full Report
            </Button>
-           <Button size="sm" onClick={handlePrintStage} disabled={!activeStage || (activeStage.status !== 'Approved' && activeStage.status !== 'Submitted')} className="shadow-lg shadow-blue-500/20">
+           <Button size="sm" onClick={handlePrintStage} disabled={!activeStage || (activeStage.status !== 'Approved' && activeStage.status !== 'Submitted' && activeStage.status !== 'Pending Approval')} className="shadow-lg shadow-blue-500/20">
               <Download className="h-4 w-4 mr-2" /> Download PDF
            </Button>
         </div>
@@ -369,13 +369,13 @@ export function ProjectDetailView({ id, role }: ProjectDetailViewProps) {
                  {/* The Circle Icon */}
                  <div className={`h-8 w-8 rounded-full flex items-center justify-center border-2 shadow-lg transition-all duration-300 ${
                    stage.status === 'Approved' ? 'bg-white border-white text-blue-600' :
-                   stage.status === 'Submitted' ? 'bg-amber-400 border-amber-400 text-white' :
+                   (stage.status === 'Submitted' || stage.status === 'Pending Approval') ? 'bg-amber-400 border-amber-400 text-white' :
                    stage.status === 'Unlocked' || stage.status === 'Rejected' ? 'bg-blue-500 border-white text-white' :
                    'bg-slate-800/50 border-white/10 text-white/30'
                  }`}>
                    {stage.status === 'Approved' ? <CheckCircle2 className="h-5 w-5" /> : 
                     stage.status === 'Locked' ? <Lock className="h-4 w-4" /> : 
-                    stage.status === 'Submitted' ? <Clock className="h-5 w-5 animate-pulse" /> :
+                    (stage.status === 'Submitted' || stage.status === 'Pending Approval') ? <Clock className="h-5 w-5 animate-pulse" /> :
                     <Clock className="h-5 w-5" />}
                  </div>
 
@@ -407,26 +407,26 @@ export function ProjectDetailView({ id, role }: ProjectDetailViewProps) {
                 <div className="flex items-center gap-3">
                   <Badge variant={
                     activeStage.status === 'Approved' ? 'success' : 
-                    activeStage.status === 'Submitted' ? 'pending' :
+                    (activeStage.status === 'Submitted' || activeStage.status === 'Pending Approval') ? 'pending' :
                     activeStage.status === 'Rejected' ? 'danger' : 'info'
                   }>
-                    {activeStage.status === 'Submitted' ? 'Under Review' : activeStage.status}
+                    {(activeStage.status === 'Submitted' || activeStage.status === 'Pending Approval') ? 'Under Review' : activeStage.status}
                   </Badge>
                   
-                  {activeStage.status === 'Submitted' && (
+                  {(activeStage.status === 'Submitted' || activeStage.status === 'Pending Approval') && (
                     <span className="text-[10px] font-bold text-slate-400 uppercase bg-slate-50 px-2 py-0.5 rounded border border-slate-100">
                       Pending with: {activeStage.template_details.assigned_role === 'ADMIN' ? 'Administrator' : 'Supervisor'}
                     </span>
                   )}
                   
-                  {(activeStage.status === 'Approved' || activeStage.status === 'Submitted') && (
+                  {(activeStage.status === 'Approved' || activeStage.status === 'Submitted' || activeStage.status === 'Pending Approval') && (
                     <span className="text-xs text-slate-400 flex items-center gap-1">
                       <Lock className="h-3 w-3" /> Read Only View
                     </span>
                   )}
                 </div>
 
-                {(activeStage.status === 'Approved' || activeStage.status === 'Submitted') && (
+                {(activeStage.status === 'Approved' || activeStage.status === 'Submitted' || activeStage.status === 'Pending Approval') && (
                   <Button variant="ghost" size="sm" onClick={handlePrintStage} className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 text-xs font-bold">
                     <Printer className="h-3 w-3 mr-1.5" /> PRINT REPORT
                   </Button>
@@ -485,11 +485,11 @@ export function ProjectDetailView({ id, role }: ProjectDetailViewProps) {
                     initialData={activeStage.current_submission?.data}
                     onSubmit={handleFormSubmit}
                     isLoading={actionLoading}
-                    readOnly={activeStage.status === 'Approved' || activeStage.status === 'Submitted' || !canEdit}
+                    readOnly={activeStage.status === 'Approved' || activeStage.status === 'Submitted' || activeStage.status === 'Pending Approval' || !canEdit}
                   />
 
                   {/* Supervisor Approval Actions */}
-                  {activeStage.status === 'Submitted' && canApprove && (
+                  {(activeStage.status === 'Submitted' || activeStage.status === 'Pending Approval') && canApprove && (
                     <div className="flex gap-3 pt-6 border-t border-slate-100">
                       <Button variant="danger" onClick={handleReject} loading={actionLoading}>Reject Stage</Button>
                       <Button onClick={handleApprove} loading={actionLoading} className="bg-emerald-600 hover:bg-emerald-700">Approve Stage</Button>
