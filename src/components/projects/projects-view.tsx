@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Plus, Upload } from 'lucide-react';
+import { Plus, Upload, Download, Loader2 } from 'lucide-react';
 import { ProjectBulkUploadModal } from '@/components/projects/project-bulk-upload-modal';
 import { ProjectTable } from '@/components/projects/project-table';
 import { Button } from '@/components/ui/button';
@@ -17,6 +17,7 @@ interface ProjectsViewProps {
 export function ProjectsView({ role }: ProjectsViewProps) {
   const router = useRouter();
   const [isUploadOpen, setIsUploadOpen] = React.useState(false);
+  const [isExporting, setIsExporting] = React.useState(false);
   const { 
     projects, 
     loading, 
@@ -30,6 +31,36 @@ export function ProjectsView({ role }: ProjectsViewProps) {
 
   const handleRowClick = (project: Project) => {
     router.push(`/${role}/projects/${project.id}`);
+  };
+
+  const handleExport = async () => {
+    setIsExporting(true);
+    const toastId = toast.loading('Exporting project data to Excel...', { icon: '📊' });
+    try {
+      const exportFilters = { ...filters };
+      delete exportFilters.page;
+      
+      const blob = await projectService.exportProjects(exportFilters);
+      
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      
+      const dateStr = new Date().toISOString().split('T')[0];
+      link.setAttribute('download', `Project_Master_Export_${dateStr}.xlsx`);
+      
+      document.body.appendChild(link);
+      link.click();
+      
+      link.parentNode?.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      toast.success('Projects exported successfully!', { id: toastId, icon: '✅' });
+    } catch (error) {
+      toast.error('Failed to export projects. Please try again.', { id: toastId });
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   const handleSearch = (search: string) => {
@@ -73,6 +104,19 @@ export function ProjectsView({ role }: ProjectsViewProps) {
         </div>
         {canCreate && (
           <div className="flex flex-wrap items-center gap-3">
+            <Button 
+              variant="outline"
+              className="border-slate-300 text-slate-700 hover:bg-slate-50 shadow-sm"
+              onClick={handleExport}
+              disabled={isExporting}
+            >
+              {isExporting ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin text-blue-600" />
+              ) : (
+                <Download className="h-4 w-4 mr-2 text-blue-600" />
+              )}
+              Export to Excel
+            </Button>
             <Button 
               variant="outline"
               className="border-slate-300 text-slate-700 hover:bg-slate-50 shadow-sm"

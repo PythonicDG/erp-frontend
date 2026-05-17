@@ -113,4 +113,12 @@ export const projectService = {
     });
     return response.data;
   },
+
+  exportProjects: async (filters: ProjectFilters = {}) => {
+    const response = await api.get('/api/projects/export/', {
+      params: filters,
+      responseType: 'blob',
+    });
+    return response.data;
+  },
 };
