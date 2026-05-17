@@ -16,6 +16,7 @@ export function CustomerMasterView() {
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
 
   const fetchCustomers = async () => {
     try {
@@ -25,6 +26,33 @@ export function CustomerMasterView() {
       toast.error('Failed to load customers');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleExport = async () => {
+    setIsExporting(true);
+    const toastId = toast.loading('Exporting customer data to Excel...', { icon: '📊' });
+    try {
+      const blob = await customerService.exportCustomers({ search: searchQuery });
+      
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      
+      const dateStr = new Date().toISOString().split('T')[0];
+      link.setAttribute('download', `Customer_Master_Export_${dateStr}.xlsx`);
+      
+      document.body.appendChild(link);
+      link.click();
+      
+      link.parentNode?.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      toast.success('Customers exported successfully!', { id: toastId, icon: '✅' });
+    } catch (error) {
+      toast.error('Failed to export customers. Please try again.', { id: toastId });
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -88,6 +116,8 @@ export function CustomerMasterView() {
         customers={customers}
         onAdd={handleAdd}
         onBulkUpload={() => setIsBulkUploadOpen(true)}
+        onExport={handleExport}
+        isExporting={isExporting}
         onEdit={handleEdit}
         onDelete={handleDelete}
         searchQuery={searchQuery}

@@ -61,4 +61,12 @@ export const customerService = {
     });
     return response.data;
   },
+
+  exportCustomers: async (params?: any) => {
+    const response = await api.get('/api/projects/customers/export/', {
+      params,
+      responseType: 'blob',
+    });
+    return response.data;
+  },
 };

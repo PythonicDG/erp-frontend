@@ -1,16 +1,18 @@
 'use client';
 
 import React from 'react';
-import { 
-  Search, 
-  Plus, 
-  Edit2, 
-  Trash2, 
-  Mail, 
-  Phone, 
+import {
+  Search,
+  Plus,
+  Edit2,
+  Trash2,
+  Mail,
+  Phone,
   MoreHorizontal,
   UserCheck,
-  Upload
+  Upload,
+  Download,
+  Loader2
 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -23,6 +25,8 @@ interface CustomerTableProps {
   onDelete: (id: string) => void;
   onAdd: () => void;
   onBulkUpload?: () => void;
+  onExport?: () => void;
+  isExporting?: boolean;
   searchQuery: string;
   onSearchChange: (query: string) => void;
 }
@@ -33,37 +37,53 @@ export const CustomerTable: React.FC<CustomerTableProps> = ({
   onDelete,
   onAdd,
   onBulkUpload,
+  onExport,
+  isExporting = false,
   searchQuery,
   onSearchChange,
 }) => {
   return (
     <Card className="p-0 overflow-hidden shadow-xl shadow-blue-500/5 border-slate-200">
       <div className="p-6 border-b bg-white flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h3 className="text-xl font-bold text-slate-900">Customer Records</h3>
-          <p className="text-sm text-slate-500">Manage your client database and contact details.</p>
+        {/* Left Side: Search Bar */}
+        <div className="relative w-full md:w-72 shrink-0">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Search customers..."
+            className="pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 outline-hidden transition-all w-full"
+            value={searchQuery}
+            onChange={(e) => onSearchChange(e.target.value)}
+          />
         </div>
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-            <input 
-              type="text" 
-              placeholder="Search customers..." 
-              className="pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 outline-hidden transition-all w-64"
-              value={searchQuery}
-              onChange={(e) => onSearchChange(e.target.value)}
-            />
-          </div>
-          {onBulkUpload && (
-            <Button 
+
+        {/* Right Side: Action Buttons */}
+        <div className="flex flex-row flex-nowrap items-center gap-2 md:gap-3 overflow-x-auto pb-1 md:pb-0">
+          {onExport && (
+            <Button
               variant="outline"
-              onClick={onBulkUpload} 
-              className="border-slate-200 text-slate-600 hover:bg-slate-50 shadow-sm"
+              onClick={onExport}
+              disabled={isExporting}
+              className="border-slate-200 text-slate-600 hover:bg-slate-50 shadow-sm whitespace-nowrap shrink-0"
+            >
+              {isExporting ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin text-blue-600" />
+              ) : (
+                <Download className="h-4 w-4 mr-2 text-blue-600" />
+              )}
+              Export to Excel
+            </Button>
+          )}
+          {onBulkUpload && (
+            <Button
+              variant="outline"
+              onClick={onBulkUpload}
+              className="border-slate-200 text-slate-600 hover:bg-slate-50 shadow-sm whitespace-nowrap shrink-0"
             >
               <Upload className="h-4 w-4 mr-2 text-slate-500" /> Bulk Upload
             </Button>
           )}
-          <Button onClick={onAdd} className="bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-500/20">
+          <Button onClick={onAdd} className="bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-500/20 whitespace-nowrap shrink-0">
             <Plus className="h-4 w-4 mr-2" /> Add Customer
           </Button>
         </div>
@@ -114,17 +134,17 @@ export const CustomerTable: React.FC<CustomerTableProps> = ({
                 </td>
                 <td className="px-6 py-4 text-right">
                   <div className="flex items-center justify-end gap-2">
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       className="h-8 w-8 text-blue-600 hover:bg-blue-50"
                       onClick={() => onEdit(customer)}
                     >
                       <Edit2 className="h-4 w-4" />
                     </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       className="h-8 w-8 text-rose-600 hover:bg-rose-50"
                       onClick={() => onDelete(customer.id)}
                     >
