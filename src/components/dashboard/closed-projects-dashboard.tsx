@@ -19,17 +19,21 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { dashboardService, DashboardData } from '@/services/dashboard-service';
 import { useRouter } from 'next/navigation';
+import { useAuthStore } from '@/store/auth-store';
 import toast from 'react-hot-toast';
 
 const COLORS = ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#ec4899'];
 
 export function ClosedProjectsDashboard() {
   const router = useRouter();
+  const { user } = useAuthStore();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     const fetchDashboard = async () => {
       try {
         const res = await dashboardService.getData();
@@ -55,7 +59,7 @@ export function ClosedProjectsDashboard() {
   return (
     <div className="p-4 sm:p-6 md:p-8 max-w-7xl mx-auto space-y-6 sm:space-y-8 animate-in fade-in duration-500">
       <div className="flex items-start sm:items-center gap-3 sm:gap-4">
-        <Button variant="ghost" size="icon" className="mt-1 sm:mt-0 flex-shrink-0" onClick={() => router.push('/admin/dashboard')}>
+        <Button variant="ghost" size="icon" className="mt-1 sm:mt-0 flex-shrink-0" onClick={() => router.push(user ? `/${user.role.toLowerCase()}/dashboard` : '/dashboard')}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div>
@@ -95,23 +99,25 @@ export function ClosedProjectsDashboard() {
             <Badge variant="success" className="bg-emerald-50 text-emerald-600 border-emerald-100">Growth Analysis</Badge>
           </div>
           <div className="h-80 w-full">
-            <ResponsiveContainer width="100%" height="100%" minWidth={0}>
-              <AreaChart data={data.charts.monthly_trend}>
-                <defs>
-                  <linearGradient id="colorSuccess" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.1}/>
-                    <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#94a3b8'}} />
-                <YAxis axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#94a3b8'}} />
-                <Tooltip 
-                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                />
-                <Area type="monotone" dataKey="count" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorSuccess)" />
-              </AreaChart>
-            </ResponsiveContainer>
+            {mounted && (
+              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+                <AreaChart data={data.charts.monthly_trend}>
+                  <defs>
+                    <linearGradient id="colorSuccess" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.1}/>
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                  <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#94a3b8'}} />
+                  <YAxis axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#94a3b8'}} />
+                  <Tooltip 
+                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                  />
+                  <Area type="monotone" dataKey="count" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorSuccess)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            )}
           </div>
         </Card>
 
@@ -119,24 +125,26 @@ export function ClosedProjectsDashboard() {
         <Card className="p-6 space-y-6">
            <h3 className="font-bold text-slate-900">Success by Type</h3>
            <div className="h-64 w-full">
-             <ResponsiveContainer width="100%" height="100%" minWidth={0}>
-               <PieChart>
-                 <Pie
-                   data={data.charts.type_distribution}
-                   cx="50%"
-                   cy="50%"
-                   innerRadius={60}
-                   outerRadius={80}
-                   paddingAngle={5}
-                   dataKey="count"
-                 >
-                   {data.charts.type_distribution.map((entry, index) => (
-                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                   ))}
-                 </Pie>
-                 <Tooltip />
-               </PieChart>
-             </ResponsiveContainer>
+             {mounted && (
+               <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+                 <PieChart>
+                   <Pie
+                     data={data.charts.type_distribution}
+                     cx="50%"
+                     cy="50%"
+                     innerRadius={60}
+                     outerRadius={80}
+                     paddingAngle={5}
+                     dataKey="count"
+                   >
+                     {data.charts.type_distribution.map((entry, index) => (
+                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                     ))}
+                   </Pie>
+                   <Tooltip />
+                 </PieChart>
+               </ResponsiveContainer>
+             )}
            </div>
            <div className="space-y-2">
              {data.charts.type_distribution.map((item, index) => (

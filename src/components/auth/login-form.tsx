@@ -46,6 +46,7 @@ export function LoginForm() {
             autoComplete="email"
             className={`form-input ${errors.email ? 'form-input-error' : ''}`}
             {...register('email')}
+            suppressHydrationWarning
           />
         </div>
         {errors.email && (
@@ -67,6 +68,7 @@ export function LoginForm() {
             autoComplete="current-password"
             className={`form-input ${errors.password ? 'form-input-error' : ''}`}
             {...register('password')}
+            suppressHydrationWarning
           />
           <button
             type="button"
