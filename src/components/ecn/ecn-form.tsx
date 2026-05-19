@@ -101,7 +101,7 @@ export function ECNForm({ id, role }: ECNFormProps) {
       try {
         setLoading(true);
         const [projData, teamData] = await Promise.all([
-          projectService.getAll({ page: 1 }),
+          projectService.getAll({ page: 1, page_size: 1000 }),
           teamService.getMembers()
         ]);
         setProjects(projData.results || []);
@@ -169,7 +169,7 @@ export function ECNForm({ id, role }: ECNFormProps) {
     setProjectSearch(val);
     if (!val.trim()) return;
     try {
-      const data = await projectService.getAll({ search: val });
+      const data = await projectService.getAll({ search: val, page_size: 1000 });
       setProjects(data.results || []);
     } catch (err) {
       console.error(err);

@@ -46,6 +46,7 @@ export interface Project {
 
 export interface ProjectFilters {
   page?: number;
+  page_size?: number;
   search?: string;
   status?: string;
   project_type?: string;
