@@ -16,6 +16,7 @@ import {
   Briefcase,
   Layers,
   BookOpen,
+  FileEdit,
 } from 'lucide-react';
 import type { UserRole } from '@/types/auth';
 import { settingsService, CompanyProfile } from '@/services/settings-service';
@@ -38,6 +39,12 @@ const navItems: NavItem[] = [
     label: 'Project Master',
     href: '/projects',
     icon: <FolderKanban size={20} />,
+    roles: ['ADMIN', 'SUPERVISOR', 'EMPLOYEE'],
+  },
+  {
+    label: 'ECN',
+    href: '/ecn',
+    icon: <FileEdit size={20} />,
     roles: ['ADMIN', 'SUPERVISOR', 'EMPLOYEE'],
   },
   {

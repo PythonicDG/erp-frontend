@@ -1,0 +1,12 @@
+'use client';
+
+import React from 'react';
+import { ECNForm } from '@/components/ecn/ecn-form';
+
+export default function SupervisorNewECNPage() {
+  return (
+    <div className="py-2">
+      <ECNForm role="supervisor" />
+    </div>
+  );
+}
