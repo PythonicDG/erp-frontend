@@ -29,6 +29,7 @@ export const generateFullProjectReport = async (projectId: string | number) => {
       let stageHtml = `
         <div class="stage-container" style="${pageBreakStyle} margin-bottom: 40px;">
           <h1 class="stage-title">${stage.template_details.name}</h1>
+          ${stage.status !== 'Approved' ? '<div class="stage-watermark">UNDER APPROVAL</div>' : ''}
           <div class="field-grid">
       `;
 
@@ -221,6 +222,24 @@ export const generateFullProjectReport = async (projectId: string | number) => {
               border: 1px solid #e2e8f0; 
             }
             
+            
+            .stage-watermark {
+              position: absolute;
+              top: 35%;
+              left: 50%;
+              transform: translate(-50%, -50%) rotate(-45deg);
+              font-size: 75px;
+              font-weight: 800;
+              color: rgba(239, 68, 68, 0.08); /* Semi-transparent light red */
+              z-index: 9999;
+              pointer-events: none;
+              white-space: nowrap;
+              text-transform: uppercase;
+              letter-spacing: 0.12em;
+              font-family: 'Inter', sans-serif;
+              display: block !important;
+            }
+
             .report-table td { 
               padding: 10px 12px; 
               border: 1px solid #e2e8f0; 

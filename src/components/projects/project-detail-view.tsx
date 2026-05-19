@@ -261,6 +261,24 @@ export function ProjectDetailView({ id, role }: ProjectDetailViewProps) {
               border: 1px solid #e2e8f0; 
             }
             
+            
+            .watermark {
+              position: fixed;
+              top: 55%;
+              left: 50%;
+              transform: translate(-50%, -50%) rotate(-45deg);
+              font-size: 75px;
+              font-weight: 800;
+              color: rgba(239, 68, 68, 0.08); /* Semi-transparent light red */
+              z-index: 9999;
+              pointer-events: none;
+              white-space: nowrap;
+              text-transform: uppercase;
+              letter-spacing: 0.12em;
+              font-family: 'Inter', sans-serif;
+              display: block !important;
+            }
+
             .report-table td { 
               padding: 10px 12px; 
               border: 1px solid #e2e8f0; 
@@ -280,8 +298,9 @@ export function ProjectDetailView({ id, role }: ProjectDetailViewProps) {
         <body>
           <div class="header">
             <div class="company-name">${companyProfile?.name || 'PCEPL Engineering'}</div>
-            <div class="logo-container">${logoUrl ? `<img src="${logoUrl}" class="logo" />` : '<div style="font-size: 20px; font-weight: 800; color: #0f172a; letter-spacing: 0.5px;">ERP SYSTEM</div>'}</div>
+            <div class="logo-container">${logoUrl ? ` <img src="${logoUrl}" class="logo" />` : '<div style="font-size: 20px; font-weight: 800; color: #0f172a; letter-spacing: 0.5px;">ERP SYSTEM</div>'}</div>
           </div>
+          ${activeStage.status !== 'Approved' ? '<div class="watermark">UNDER APPROVAL</div>' : ''}
 
           <h1 class="stage-title">${activeStage.template_details.name}</h1>
 
@@ -567,6 +586,8 @@ export function ProjectDetailView({ id, role }: ProjectDetailViewProps) {
                     onSubmit={handleFormSubmit}
                     isLoading={actionLoading}
                     readOnly={activeStage.status === 'Approved' || activeStage.status === 'Submitted' || activeStage.status === 'Pending Approval' || !canEdit}
+                    stageStatus={activeStage.status}
+                    submittedByName={activeStage.current_submission?.submitted_by_name}
                   />
 
                   {/* Supervisor Approval Actions */}

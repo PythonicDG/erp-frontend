@@ -240,6 +240,24 @@ export function ECNDetail({ id, role }: ECNDetailProps) {
               border: 1px solid #e2e8f0;
             }
 
+            
+            .watermark {
+              position: fixed;
+              top: 55%;
+              left: 50%;
+              transform: translate(-50%, -50%) rotate(-45deg);
+              font-size: 75px;
+              font-weight: 800;
+              color: rgba(239, 68, 68, 0.08); /* Semi-transparent light red */
+              z-index: 9999;
+              pointer-events: none;
+              white-space: nowrap;
+              text-transform: uppercase;
+              letter-spacing: 0.12em;
+              font-family: 'Inter', sans-serif;
+              display: block !important;
+            }
+
             table td {
               padding: 10px 12px;
               border: 1px solid #e2e8f0;
@@ -261,6 +279,7 @@ export function ECNDetail({ id, role }: ECNDetailProps) {
             <div class="company-name">${companyName}</div>
             <div class="logo-container">${imageLogo}</div>
           </div>
+          ${ecn.status !== 'Approved' ? '<div class="watermark">UNDER APPROVAL</div>' : ''}
 
           <h1 class="report-title">Engineering Change Request (ECN)</h1>
 

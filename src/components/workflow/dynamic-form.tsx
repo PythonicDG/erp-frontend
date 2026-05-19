@@ -16,6 +16,8 @@ interface DynamicFormProps {
   onSubmit: (data: any) => void;
   isLoading?: boolean;
   readOnly?: boolean;
+  stageStatus?: string;
+  submittedByName?: string;
 }
 
 export const DynamicForm: React.FC<DynamicFormProps> = ({ 
@@ -24,7 +26,9 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
   initialData, 
   onSubmit, 
   isLoading,
-  readOnly 
+  readOnly,
+  stageStatus,
+  submittedByName
 }) => {
   const formMethods = useForm({
     defaultValues: initialData || {}
@@ -73,7 +77,7 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
           </div>
         );
       case 'date': return <Input {...commonProps} type="date" />;
-      case 'file': return <FileFieldField field={field} readOnly={readOnly} />;
+      case 'file': return <FileFieldField field={field} readOnly={readOnly} stageStatus={stageStatus} submittedByName={submittedByName} />;
       default: return null;
     }
   };
@@ -200,8 +204,23 @@ const GridField = ({ field, readOnly }: { field: FormField; readOnly?: boolean }
   );
 };
 
-const FileFieldField = ({ field, readOnly }: { field: FormField; readOnly?: boolean }) => {
-  const { register, watch, setValue, formState: { errors } } = useFormContext();
+const isUnderApproval = (status?: string) => {
+  if (!status) return false;
+  return ['Submitted', 'Pending Approval', 'Reviewed', 'Under Approval'].includes(status);
+};
+
+const FileFieldField = ({ 
+  field, 
+  readOnly,
+  stageStatus,
+  submittedByName 
+}: { 
+  field: FormField; 
+  readOnly?: boolean;
+  stageStatus?: string;
+  submittedByName?: string;
+}) => {
+  const { watch, setValue } = useFormContext();
   const fileData = watch(field.name);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -228,25 +247,103 @@ const FileFieldField = ({ field, readOnly }: { field: FormField; readOnly?: bool
     setValue(field.name, null);
   };
 
+  const handleDownload = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    if (!fileData?.base64) return;
+
+    const fileName = fileData.name;
+    const fileType = fileData.type;
+    const isImage = fileType.startsWith('image/') || /\.(jpg|jpeg|png|gif)$/i.test(fileName);
+    const underApproval = isUnderApproval(stageStatus);
+
+    if (underApproval && isImage) {
+      const img = new Image();
+      img.src = fileData.base64;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth || img.width || 800;
+        canvas.height = img.naturalHeight || img.height || 600;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          triggerDirectDownload(fileData.base64, fileName);
+          return;
+        }
+
+        // Draw original image
+        ctx.drawImage(img, 0, 0);
+
+        // Calculate responsive size based on image width
+        const size = Math.max(20, Math.floor(canvas.width / 12));
+        
+        ctx.save();
+        ctx.translate(canvas.width / 2, canvas.height / 2);
+        ctx.rotate(-45 * Math.PI / 180);
+        ctx.font = `bold ${size}px 'Inter', sans-serif`;
+        ctx.fillStyle = 'rgba(239, 68, 68, 0.16)'; // Semi-transparent red
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('UNDER APPROVAL', 0, -size / 2);
+        
+        if (submittedByName) {
+          const smallSize = Math.max(12, Math.floor(size / 3.5));
+          ctx.font = `bold ${smallSize}px 'Inter', sans-serif`;
+          ctx.fillStyle = 'rgba(100, 116, 139, 0.22)'; // Semi-transparent slate
+          ctx.fillText(`Uploaded By: ${submittedByName}`, 0, size * 0.7);
+        }
+        ctx.restore();
+
+        const watermarkedBase64 = canvas.toDataURL(fileType);
+        triggerDirectDownload(watermarkedBase64, fileName);
+      };
+      img.onerror = () => {
+        triggerDirectDownload(fileData.base64, fileName);
+      };
+    } else {
+      triggerDirectDownload(fileData.base64, fileName);
+    }
+  };
+
+  const triggerDirectDownload = (base64: string, name: string) => {
+    const link = document.createElement('a');
+    link.href = base64;
+    link.download = name;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="space-y-1.5 w-full">
       <label className="block text-sm font-medium text-slate-700 mb-1">{field.label}</label>
       
       {fileData?.base64 ? (
-        <div className="flex items-center justify-between p-3 rounded-lg border border-slate-200 bg-slate-50/50">
-          <div className="flex items-center gap-3 overflow-hidden">
+        <div className="relative overflow-hidden flex items-center justify-between p-3 rounded-lg border border-slate-200 bg-slate-50/50">
+          {/* Under Approval Visual Watermark overlay */}
+          {isUnderApproval(stageStatus) && (
+            <div className="absolute inset-y-0 right-[150px] left-[120px] pointer-events-none flex items-center justify-center opacity-[0.16] select-none overflow-hidden hidden sm:flex">
+              <span className="text-[11px] font-black text-rose-600 uppercase tracking-widest rotate-[-12deg] border-2 border-rose-400 rounded px-2 whitespace-nowrap bg-rose-50/10">
+                Under Approval
+              </span>
+            </div>
+          )}
+
+          <div className="flex items-center gap-3 overflow-hidden z-10">
             <div className="h-10 w-10 bg-blue-50 text-blue-600 border border-blue-100 rounded-lg flex items-center justify-center font-bold text-xs uppercase shrink-0">
               {fileData.name.split('.').pop() || 'FILE'}
             </div>
             <div className="min-w-0">
               <p className="text-sm font-semibold text-slate-900 truncate">{fileData.name}</p>
-              <p className="text-xs text-slate-400">File Attachment</p>
+              <p className="text-xs text-slate-400">
+                {isUnderApproval(stageStatus) ? (
+                  <span className="text-rose-600 font-medium">Under Approval • {submittedByName ? `By ${submittedByName}` : 'Pending'}</span>
+                ) : 'File Attachment'}
+              </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 z-10">
             <a
-              href={fileData.base64}
-              download={fileData.name}
+              href="#"
+              onClick={handleDownload}
               className="text-xs font-bold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100/80 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
             >
               Download
