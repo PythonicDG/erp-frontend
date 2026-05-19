@@ -19,6 +19,7 @@ import {
 import toast from 'react-hot-toast';
 import { useAuthStore } from '@/store/auth-store';
 import { ecnService, ECN, ECNStatus } from '@/services/ecn-service';
+import { settingsService, CompanyProfile } from '@/services/settings-service';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -34,26 +35,35 @@ export function ECNDetail({ id, role }: ECNDetailProps) {
   const { user } = useAuthStore();
   
   const [ecn, setEcn] = useState<ECN | null>(null);
+  const [companyProfile, setCompanyProfile] = useState<CompanyProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [workflowLoading, setWorkflowLoading] = useState(false);
 
   const isAdmin = role === 'admin' || user?.role === 'ADMIN';
   const isSupervisor = role === 'supervisor' || user?.role === 'SUPERVISOR' || isAdmin;
 
-  // Load ECN Details
+  const logoUrl = companyProfile?.logo 
+    ? (companyProfile.logo.startsWith('http') ? companyProfile.logo : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}${companyProfile.logo}`)
+    : null;
+
+  // Load ECN Details and Company Profile
   useEffect(() => {
-    const fetchECN = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
-        const data = await ecnService.getById(id);
-        setEcn(data);
+        const [ecnData, companyData] = await Promise.all([
+          ecnService.getById(id),
+          settingsService.getCompanyProfile().catch(() => null)
+        ]);
+        setEcn(ecnData);
+        setCompanyProfile(companyData);
       } catch (err) {
         toast.error('Failed to load ECN details');
       } finally {
         setLoading(false);
       }
     };
-    fetchECN();
+    fetchData();
   }, [id]);
 
   // Handle auto-trigger print from query param
@@ -136,55 +146,76 @@ export function ECNDetail({ id, role }: ECNDetailProps) {
         @media print {
           body {
             background-color: white !important;
-            color: black !important;
+            color: #0f172a !important;
             font-size: 11px !important;
           }
-          .sidebar, .dashboard-header, .no-print, button, .badge-container {
+          .sidebar, .dashboard-header, .no-print, button, .badge-container, .print-hide {
             display: none !important;
           }
           .print-header {
             display: flex !important;
-            flex-direction: column !important;
+            justify-content: space-between !important;
             align-items: center !important;
-            text-align: center !important;
-            border-bottom: 2px solid #000 !important;
-            padding-bottom: 12px !important;
-            margin-bottom: 20px !important;
+            border-bottom: 1.5px solid #e2e8f0 !important;
+            padding-bottom: 16px !important;
+            margin-bottom: 35px !important;
+          }
+          .print-logo {
+            height: 48px !important;
+            object-fit: contain !important;
+          }
+          .print-company-name {
+            font-size: 16px !important;
+            font-weight: 700 !important;
+            color: #0f172a !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.5px !important;
+          }
+          .print-title {
+            display: block !important;
+            font-size: 22px !important;
+            font-weight: 700 !important;
+            color: #0f172a !important;
+            margin-top: 0 !important;
+            margin-bottom: 28px !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.5px !important;
+            border-bottom: 1.5px solid #f1f5f9 !important;
+            padding-bottom: 8px !important;
           }
           .card {
-            border: 1px solid #ddd !important;
+            border: none !important;
+            border-bottom: 1px solid #f1f5f9 !important;
+            border-radius: 0 !important;
             box-shadow: none !important;
-            margin-bottom: 15px !important;
+            margin-bottom: 25px !important;
+            padding: 0 !important;
             page-break-inside: avoid !important;
           }
           .card-header {
-            background-color: #f5f5f5 !important;
-            border-bottom: 1px solid #ddd !important;
-            font-weight: bold !important;
+            background-color: transparent !important;
+            border-bottom: none !important;
+            padding: 0 !important;
+            margin-bottom: 12px !important;
+            font-weight: 700 !important;
+            font-size: 13px !important;
+            color: #64748b !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.05em !important;
           }
           table {
             width: 100% !important;
             border-collapse: collapse !important;
           }
           th, td {
-            border: 1px solid #ccc !important;
-            padding: 6px 8px !important;
+            border: 1px solid #e2e8f0 !important;
+            padding: 8px 10px !important;
+            text-align: left !important;
           }
           th {
-            background-color: #f9f9f9 !important;
-          }
-          .print-signatures {
-            display: grid !important;
-            grid-template-cols: repeat(3, 1fr) !important;
-            gap: 20px !important;
-            margin-top: 40px !important;
-            page-break-inside: avoid !important;
-          }
-          .sig-box {
-            border-top: 1px dashed #333 !important;
-            text-align: center !important;
-            padding-top: 8px !important;
-            font-size: 10px !important;
+            background-color: #f8fafc !important;
+            font-weight: 600 !important;
+            color: #475569 !important;
           }
         }
       `}</style>
@@ -318,19 +349,24 @@ export function ECNDetail({ id, role }: ECNDetailProps) {
 
       {/* FORMAL PRINT BANNER HEADER (Only visible during print) */}
       <div className="hidden print-header">
-        <h1 className="text-xl font-bold uppercase tracking-wide">PCEPL Engineering Department</h1>
-        <h2 className="text-lg font-bold text-slate-800 uppercase tracking-tight mt-1">
-          Engineering Change Request (ECN)
-        </h2>
-        <div className="text-[9px] text-slate-500 mt-2 font-mono flex gap-6">
-          <span><strong>ECN NO:</strong> {ecn.ecn_number || 'DRAFT'}</span>
-          <span><strong>DATE:</strong> {ecn.ecn_date ? new Date(ecn.ecn_date).toLocaleDateString() : '-'}</span>
-          <span><strong>STATUS:</strong> {ecn.status.toUpperCase()}</span>
+        <div className="logo-container">
+          {logoUrl ? (
+            <img src={logoUrl} className="print-logo" alt="Company Logo" />
+          ) : (
+            <div className="text-xl font-extrabold tracking-wide">ERP SYSTEM</div>
+          )}
+        </div>
+        <div className="print-company-name">
+          {companyProfile?.name || 'PCEPL Engineering'}
         </div>
       </div>
 
+      <h1 className="hidden print-title">
+        Engineering Change Request (ECN)
+      </h1>
+
       {/* SECTION 1: Project & Customer Details */}
-      <Card title="Section 1: Project & Customer Details" className="card">
+      <Card title="Section 1: Project & Customer Details" className="card print-hide">
         <div className="grid grid-cols-2 md:grid-cols-3 gap-y-4 gap-x-6 text-sm">
           <div>
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">ECN Number</span>
@@ -487,7 +523,7 @@ export function ECNDetail({ id, role }: ECNDetailProps) {
       </Card>
 
       {/* SECTION 5: Approvals */}
-      <Card title="Section 5: Approvals Routing" className="card">
+      <Card title="Section 5: Approvals Routing" className="card print-hide">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
           {/* Initiated */}
           <div className="p-4 bg-slate-50/50 border border-slate-100 rounded-xl space-y-1">
@@ -515,28 +551,6 @@ export function ECNDetail({ id, role }: ECNDetailProps) {
           </div>
         </div>
       </Card>
-
-      {/* FORMAL SIGNATURE BOXES (Only visible during print) */}
-      <div className="hidden print-signatures">
-        <div className="flex flex-col items-center">
-          <div className="w-3/4 sig-box mt-10">
-            <strong>Initiator Signature</strong>
-            <div className="text-[9px] text-slate-500 mt-1">{ecn.initiator_name || ecn.change_initiated_by}</div>
-          </div>
-        </div>
-        <div className="flex flex-col items-center">
-          <div className="w-3/4 sig-box mt-10">
-            <strong>Reviewed By Signature</strong>
-            <div className="text-[9px] text-slate-500 mt-1">{ecn.reviewed_by_name || 'Awaiting Review'}</div>
-          </div>
-        </div>
-        <div className="flex flex-col items-center">
-          <div className="w-3/4 sig-box mt-10">
-            <strong>Approved By Signature</strong>
-            <div className="text-[9px] text-slate-500 mt-1">{ecn.approved_by_name || 'Awaiting Approval'}</div>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

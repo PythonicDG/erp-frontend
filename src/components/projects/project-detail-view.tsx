@@ -144,107 +144,143 @@ export function ProjectDetailView({ id, role }: ProjectDetailViewProps) {
     printWindow.document.write(`
       <html>
         <head>
-          <title>Stage Report - ${project.pid} - ${activeStage.template_details.name}</title>
+          <title>${companyProfile?.name || 'ERP'} - Stage Report</title>
           <style>
             @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-            body { font-family: 'Inter', sans-serif; color: #1e293b; line-height: 1.5; padding: 40px; margin: 0; }
-            .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #3b82f6; padding-bottom: 20px; margin-bottom: 30px; }
-            .company-info { text-align: right; }
-            .company-name { font-size: 20px; font-weight: 700; color: #0f172a; margin: 0; }
-            .company-details { font-size: 11px; color: #64748b; margin-top: 4px; }
-            .logo { height: 60px; object-fit: contain; }
             
-            .report-title { font-size: 24px; font-weight: 700; color: #0f172a; margin-bottom: 20px; text-align: center; text-transform: uppercase; letter-spacing: 1px; }
-            
-            .info-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; background: #f8fafc; padding: 20px; border-radius: 8px; margin-bottom: 30px; border: 1px solid #e2e8f0; }
-            .info-item { display: flex; flex-direction: column; gap: 4px; }
-            .info-label { font-size: 10px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; }
-            .info-value { font-size: 13px; font-weight: 600; color: #1e293b; }
-            
-            .report-section { margin-bottom: 30px; }
-            .section-title { font-size: 14px; font-weight: 700; color: #3b82f6; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.05em; }
-            
-            .field-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
-            .field-item { display: flex; flex-direction: column; gap: 4px; }
-            .field-label { font-size: 11px; font-weight: 600; color: #64748b; }
-            .field-value { font-size: 13px; color: #0f172a; min-height: 20px; border-bottom: 1px solid #f1f5f9; padding-bottom: 2px; }
-            
-            .grid-field { grid-column: span 2; }
-            .report-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
-            .report-table th { background: #f1f5f9; text-align: left; padding: 10px; font-weight: 700; color: #475569; border: 1px solid #e2e8f0; }
-            .report-table td { padding: 10px; border: 1px solid #e2e8f0; color: #1e293b; }
-            
-            .watermark {
-              position: fixed;
-              top: 50%;
-              left: 50%;
-              transform: translate(-50%, -50%) rotate(-45deg);
-              font-size: 80px;
-              color: rgba(15, 23, 42, 0.1);
-              font-weight: 900;
-              pointer-events: none;
-              z-index: 1000;
-              white-space: nowrap;
-              text-transform: uppercase;
-              letter-spacing: 10px;
+            body { 
+              font-family: 'Inter', sans-serif; 
+              color: #0f172a; 
+              line-height: 1.6; 
+              padding: 40px; 
+              margin: 0; 
+              background-color: #ffffff;
             }
-            .watermark.pending { color: rgba(234, 179, 8, 0.15); }
-            .watermark.rejected { color: rgba(225, 29, 72, 0.15); }
             
-            .footer { position: fixed; bottom: 30px; left: 40px; right: 40px; border-top: 1px solid #e2e8f0; padding-top: 10px; display: flex; justify-content: space-between; font-size: 10px; color: #94a3b8; }
+            .header { 
+              display: flex; 
+              justify-content: space-between; 
+              align-items: center; 
+              border-bottom: 1.5px solid #e2e8f0; 
+              padding-bottom: 16px; 
+              margin-bottom: 35px; 
+            }
+            
+            .company-name { 
+              font-size: 16px; 
+              font-weight: 700; 
+              color: #0f172a; 
+              text-transform: uppercase; 
+              letter-spacing: 0.5px;
+            }
+            
+            .logo { 
+              height: 48px; 
+              object-fit: contain; 
+            }
+            
+            .stage-title { 
+              font-size: 22px; 
+              font-weight: 700; 
+              color: #0f172a; 
+              margin-top: 0;
+              margin-bottom: 28px; 
+              text-transform: uppercase; 
+              letter-spacing: 0.5px;
+              border-bottom: 1.5px solid #f1f5f9;
+              padding-bottom: 8px;
+            }
+            
+            .report-section { 
+              margin-bottom: 30px; 
+            }
+            
+            .section-title { 
+              font-size: 13px; 
+              font-weight: 700; 
+              color: #64748b; 
+              border-bottom: 1px solid #e2e8f0; 
+              padding-bottom: 6px; 
+              margin-bottom: 18px; 
+              text-transform: uppercase; 
+              letter-spacing: 0.05em; 
+            }
+            
+            .field-grid { 
+              display: grid; 
+              grid-template-columns: repeat(2, 1fr); 
+              gap: 16px; 
+            }
+            
+            .field-item { 
+              display: flex; 
+              flex-direction: column; 
+              gap: 4px; 
+            }
+            
+            .field-label { 
+              font-size: 11px; 
+              font-weight: 600; 
+              color: #94a3b8; 
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+            }
+            
+            .field-value { 
+              font-size: 13px; 
+              color: #0f172a; 
+              min-height: 20px; 
+              border-bottom: 1.5px solid #f1f5f9; 
+              padding-bottom: 2px; 
+            }
+            
+            .grid-field { 
+              grid-column: span 2; 
+            }
+            
+            .report-table { 
+              width: 100%; 
+              border-collapse: collapse; 
+              margin-top: 10px; 
+              font-size: 12px; 
+            }
+            
+            .report-table th { 
+              background: #f8fafc; 
+              text-align: left; 
+              padding: 10px 12px; 
+              font-weight: 600; 
+              color: #475569; 
+              border: 1px solid #e2e8f0; 
+            }
+            
+            .report-table td { 
+              padding: 10px 12px; 
+              border: 1px solid #e2e8f0; 
+              color: #1e293b; 
+            }
             
             @media print {
-              body { padding: 20px; }
-              .no-print { display: none; }
-              @page { margin: 2cm; }
+              body { 
+                padding: 0; 
+              }
+              @page { 
+                margin: 1.5cm; 
+              }
             }
           </style>
         </head>
         <body>
-          ${(activeStage.status === 'Submitted' || activeStage.status === 'Pending Approval') ? '<div class="watermark pending">UNDER REVIEW</div>' : ''}
-          ${activeStage.status === 'Rejected' ? '<div class="watermark rejected">REJECTED</div>' : ''}
           <div class="header">
             <div class="logo-container">
-              ${logoUrl ? `<img src="${logoUrl}" class="logo" />` : '<div style="font-size: 24px; font-weight: 800; color: #3b82f6;">ERP SYSTEM</div>'}
+              ${logoUrl ? `<img src="${logoUrl}" class="logo" />` : '<div style="font-size: 20px; font-weight: 800; color: #0f172a; letter-spacing: 0.5px;">ERP SYSTEM</div>'}
             </div>
-            <div class="company-info">
-              <p class="company-name">${companyProfile?.name || 'PCEPL Engineering'}</p>
-              <p class="company-details">
-                ${companyProfile?.address || ''}<br/>
-                ${companyProfile?.city || ''}, ${companyProfile?.state || ''} ${companyProfile?.postal_code || ''}<br/>
-                Email: ${companyProfile?.email || ''} | Phone: ${companyProfile?.phone || ''}
-              </p>
-            </div>
+            <div class="company-name">${companyProfile?.name || 'PCEPL Engineering'}</div>
           </div>
 
-          <h1 class="report-title">STAGE COMPLETION REPORT</h1>
-
-          <div class="info-grid">
-            <div class="info-item">
-              <span class="info-label">PROJECT NAME</span>
-              <span class="info-value">${project.name}</span>
-            </div>
-            <div class="info-item">
-              <span class="info-label">PROJECT ID</span>
-              <span class="info-value">${project.pid}</span>
-            </div>
-            <div class="info-item">
-              <span class="info-label">CUSTOMER</span>
-              <span class="info-value">${project.customer_name}</span>
-            </div>
-            <div class="info-item">
-              <span class="info-label">STAGE NAME</span>
-              <span class="info-value">${activeStage.template_details.name}</span>
-            </div>
-          </div>
+          <h1 class="stage-title">${activeStage.template_details.name}</h1>
 
           ${formHtml}
-
-          <div class="footer">
-            <span>Printed on ${new Date().toLocaleString()}</span>
-            <span>ERP System - Confidential Report</span>
-            <span>Page 1 of 1</span>
-          </div>
 
           <script>
             window.onload = () => {
