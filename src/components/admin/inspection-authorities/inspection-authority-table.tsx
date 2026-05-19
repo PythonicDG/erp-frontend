@@ -14,6 +14,7 @@ import {
   ChevronRight,
   Filter,
   RefreshCw,
+  ChevronDown,
   Award,
   BookOpen
 } from 'lucide-react';
@@ -81,108 +82,87 @@ export const InspectionAuthorityTable: React.FC<AuthorityTableProps> = ({
 
   return (
     <div className="space-y-4">
-      {/* Search & Actions Header */}
-      <Card className="p-4 bg-white border-slate-200 shadow-sm flex flex-col gap-4">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      {/* Search & Filters Controls Card */}
+      <Card className="p-4 bg-white border-slate-200 shadow-sm flex flex-col gap-4 rounded-xl">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          
           {/* Search bar */}
-          <div className="relative w-full md:w-80">
+          <div className="relative w-full lg:max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
             <input
               type="text"
               placeholder="Search authority ID, name, or contact..."
-              className="pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 outline-hidden transition-all w-full font-medium"
+              className="pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-hidden transition-all w-full font-medium h-10 shadow-2xs text-slate-700"
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
             />
           </div>
 
-          {/* Action buttons in a premium single row */}
-          <div className="flex flex-row flex-nowrap items-center gap-2 md:gap-3 overflow-x-auto pb-1 md:pb-0">
-            {onExport && (
-              <Button
-                variant="outline"
-                onClick={onExport}
-                disabled={isExporting}
-                className="border-slate-200 text-slate-600 hover:bg-slate-50 shadow-sm whitespace-nowrap shrink-0"
+          {/* Filters controls */}
+          <div className="flex flex-wrap items-center gap-2.5 w-full lg:w-auto">
+            <div className="flex items-center gap-1.5 text-xs text-slate-400 font-bold uppercase tracking-wider mr-1 shrink-0">
+              <Filter className="h-3.5 w-3.5 text-blue-500" />
+              <span>Filters:</span>
+            </div>
+
+            {/* Category Filter */}
+            <div className="relative shrink-0 w-full sm:w-auto">
+              <select
+                value={selectedCategory}
+                onChange={(e) => onCategoryChange(e.target.value)}
+                className="h-10 w-full sm:w-auto px-3.5 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-600 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-hidden transition-all cursor-pointer shadow-2xs pr-8 appearance-none"
               >
-                {isExporting ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin text-blue-600" />
-                ) : (
-                  <Download className="h-4 w-4 mr-2 text-blue-600" />
-                )}
-                Export to Excel
+                <option value="all">All Categories</option>
+                {categoriesList.map((cat) => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+            </div>
+
+            {/* Status Filter */}
+            <div className="relative shrink-0 w-full sm:w-auto">
+              <select
+                value={selectedStatus}
+                onChange={(e) => onStatusChange(e.target.value)}
+                className="h-10 w-full sm:w-auto px-3.5 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-600 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-hidden transition-all cursor-pointer shadow-2xs pr-8 appearance-none"
+              >
+                <option value="all">All Statuses</option>
+                <option value="Active">Active Only</option>
+                <option value="Inactive">Inactive Only</option>
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+            </div>
+
+            {/* Approval Type Filter */}
+            {approvalTypesList.length > 0 && (
+              <div className="relative shrink-0 w-full sm:w-auto">
+                <select
+                  value={selectedApprovalType}
+                  onChange={(e) => onApprovalTypeChange(e.target.value)}
+                  className="h-10 w-full sm:w-auto px-3.5 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-600 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-hidden transition-all cursor-pointer shadow-2xs pr-8 appearance-none min-w-[150px]"
+                >
+                  <option value="all">All Approval Types</option>
+                  {approvalTypesList.map((t) => (
+                    <option key={t} value={t}>{t}</option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+              </div>
+            )}
+
+            {/* Reset button */}
+            {(selectedCategory !== 'all' || selectedStatus !== 'all' || selectedApprovalType !== 'all') && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onResetFilters}
+                className="h-10 px-3.5 rounded-xl text-xs text-blue-600 hover:bg-blue-50 font-bold whitespace-nowrap transition-all"
+              >
+                <RefreshCw className="h-3 w-3 mr-1.5" /> Reset
               </Button>
             )}
-            {onBulkUpload && (
-              <Button
-                variant="outline"
-                onClick={onBulkUpload}
-                className="border-slate-200 text-slate-600 hover:bg-slate-50 shadow-sm whitespace-nowrap shrink-0"
-              >
-                <Upload className="h-4 w-4 mr-2 text-slate-500" /> Bulk Upload
-              </Button>
-            )}
-            <Button onClick={onAdd} className="bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-500/20 whitespace-nowrap shrink-0 font-bold">
-              <Plus className="h-4 w-4 mr-2" /> Add Authority
-            </Button>
           </div>
-        </div>
-
-        {/* Filter Controls Panel */}
-        <div className="border-t pt-4 flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-1.5 text-xs text-slate-400 font-bold uppercase tracking-wider mr-2">
-            <Filter className="h-3.5 w-3.5 text-blue-600" />
-            <span>Filters:</span>
-          </div>
-
-          {/* Category Filter */}
-          <select
-            value={selectedCategory}
-            onChange={(e) => onCategoryChange(e.target.value)}
-            className="h-9 px-3 py-1 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-600 focus:ring-2 focus:ring-blue-500/20 outline-hidden transition-all cursor-pointer shadow-2xs"
-          >
-            <option value="all">All Categories</option>
-            {categoriesList.map((cat) => (
-              <option key={cat} value={cat}>{cat}</option>
-            ))}
-          </select>
-
-          {/* Status Filter */}
-          <select
-            value={selectedStatus}
-            onChange={(e) => onStatusChange(e.target.value)}
-            className="h-9 px-3 py-1 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-600 focus:ring-2 focus:ring-blue-500/20 outline-hidden transition-all cursor-pointer shadow-2xs"
-          >
-            <option value="all">All Statuses</option>
-            <option value="Active">Active Only</option>
-            <option value="Inactive">Inactive Only</option>
-          </select>
-
-          {/* Approval Type Filter */}
-          {approvalTypesList.length > 0 && (
-            <select
-              value={selectedApprovalType}
-              onChange={(e) => onApprovalTypeChange(e.target.value)}
-              className="h-9 px-3 py-1 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-600 focus:ring-2 focus:ring-blue-500/20 outline-hidden transition-all cursor-pointer shadow-2xs max-w-[180px]"
-            >
-              <option value="all">All Approval Types</option>
-              {approvalTypesList.map((t) => (
-                <option key={t} value={t}>{t}</option>
-              ))}
-            </select>
-          )}
-
-          {/* Reset button */}
-          {(selectedCategory !== 'all' || selectedStatus !== 'all' || selectedApprovalType !== 'all') && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onResetFilters}
-              className="h-9 text-xs text-blue-600 hover:bg-blue-50 font-bold whitespace-nowrap"
-            >
-              <RefreshCw className="h-3 w-3 mr-1" /> Reset Filters
-            </Button>
-          )}
         </div>
       </Card>
 
@@ -298,27 +278,59 @@ export const InspectionAuthorityTable: React.FC<AuthorityTableProps> = ({
         </div>
 
         {/* Pagination Bar */}
-        {totalPages > 1 && (
-          <div className="p-4 border-t bg-slate-50 flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500">
-              Showing page <strong className="text-slate-800">{currentPage}</strong> of <strong className="text-slate-800">{totalPages}</strong> ({totalCount} total authorities)
-            </span>
+        {totalCount > 10 && (
+          <div className="px-6 py-4 bg-slate-50/50 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="text-sm text-slate-500 text-center sm:text-left font-medium">
+              Showing <span className="font-semibold text-slate-900">{(currentPage - 1) * 10 + 1}</span> to{' '}
+              <span className="font-semibold text-slate-900">
+                {Math.min(currentPage * 10, totalCount)}
+              </span>{' '}
+              of <span className="font-semibold text-slate-900">{totalCount}</span> authorities
+            </div>
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => onPageChange(currentPage - 1)}
                 disabled={currentPage === 1}
-                className="h-8 px-2 border-slate-200 bg-white"
+                onClick={() => onPageChange(currentPage - 1)}
+                className="h-9 px-3 border-slate-200 bg-white hover:bg-slate-50 text-slate-600 rounded-xl"
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
+              <div className="flex items-center gap-1">
+                {Array.from({ length: totalPages }).map((_, i) => {
+                  const pageNum = i + 1;
+                  // Only display near page numbers to prevent layout breaks on large pagination lists
+                  if (pageNum === 1 || pageNum === totalPages || Math.abs(pageNum - currentPage) <= 1) {
+                    return (
+                      <Button
+                        key={pageNum}
+                        variant={currentPage === pageNum ? 'primary' : 'outline'}
+                        size="sm"
+                        className={`w-9 h-9 px-0 rounded-xl transition-all ${currentPage === pageNum ? 'bg-blue-600 hover:bg-blue-700 text-white font-bold' : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-600 font-medium'}`}
+                        onClick={() => onPageChange(pageNum)}
+                      >
+                        {pageNum}
+                      </Button>
+                    );
+                  }
+                  // Render ellipses
+                  if (pageNum === 2 || pageNum === totalPages - 1) {
+                    return (
+                      <span key={pageNum} className="text-slate-400 px-1 font-bold text-xs select-none">
+                        ...
+                      </span>
+                    );
+                  }
+                  return null;
+                })}
+              </div>
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => onPageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
-                className="h-8 px-2 border-slate-200 bg-white"
+                onClick={() => onPageChange(currentPage + 1)}
+                className="h-9 px-3 border-slate-200 bg-white hover:bg-slate-50 text-slate-600 rounded-xl"
               >
                 <ChevronRight className="h-4 w-4" />
               </Button>

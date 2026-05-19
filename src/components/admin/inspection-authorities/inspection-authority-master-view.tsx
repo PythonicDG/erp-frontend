@@ -6,6 +6,8 @@ import { InspectionAuthorityForm } from '@/components/admin/inspection-authoriti
 import { inspectionAuthorityService, InspectionAuthority } from '@/services/inspection-authority-service';
 import { InspectionAuthorityBulkUploadModal } from '@/components/admin/inspection-authorities/inspection-authority-bulk-upload-modal';
 import toast from 'react-hot-toast';
+import { Plus, Upload, Download, Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 export function InspectionAuthorityMasterView() {
   const [authorities, setAuthorities] = useState<InspectionAuthority[]>([]);
@@ -161,10 +163,40 @@ export function InspectionAuthorityMasterView() {
 
   return (
     <div className="p-8 max-w-7xl mx-auto space-y-6 animate-in fade-in duration-500">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-5">
         <div>
           <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Inspection Authority Master</h1>
-          <p className="text-slate-500 font-medium mt-1">Configure customer QA, third-party inspection, and classification agency master registers.</p>
+          <p className="text-slate-500 font-medium mt-1">Configure customer QA, third-party inspection.</p>
+        </div>
+        <div className="flex flex-row flex-nowrap items-center gap-3 overflow-x-auto pb-1 md:pb-0 shrink-0">
+          <Button 
+            variant="outline"
+            className="border-slate-300 text-slate-700 hover:bg-slate-50 shadow-xs h-10 px-4 rounded-xl font-semibold transition-all shrink-0 whitespace-nowrap"
+            onClick={handleExport}
+            disabled={isExporting}
+          >
+            {isExporting ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin text-blue-600" />
+            ) : (
+              <Download className="h-4 w-4 mr-2 text-blue-600" />
+            )}
+            Export to Excel
+          </Button>
+          <Button 
+            variant="outline"
+            className="border-slate-300 text-slate-700 hover:bg-slate-50 shadow-xs h-10 px-4 rounded-xl font-semibold transition-all shrink-0 whitespace-nowrap"
+            onClick={() => setIsBulkUploadOpen(true)}
+          >
+            <Upload className="h-4 w-4 mr-2 text-slate-500" />
+            Bulk Upload
+          </Button>
+          <Button 
+            className="bg-blue-600 hover:bg-blue-700 text-white font-bold h-10 px-4 rounded-xl shadow-lg shadow-blue-500/20 shrink-0 transition-all whitespace-nowrap"
+            onClick={handleAdd}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Authority
+          </Button>
         </div>
       </div>
 
