@@ -101,31 +101,6 @@ export function TeamManagementView() {
         </Button>
       </div>
 
-      <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-white p-4 rounded-xl border border-slate-200">
-        <div className="relative w-full md:w-96">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-          <input 
-            type="text" 
-            placeholder="Search by name, email or ID..."
-            className="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-200 text-sm focus:ring-2 focus:ring-blue-500/20 outline-hidden transition-all"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-        <div className="flex gap-2 w-full md:w-auto">
-          <select 
-            className="px-4 py-2 rounded-lg border border-slate-200 text-sm bg-white focus:ring-2 focus:ring-blue-500/20 outline-hidden transition-all"
-            value={roleFilter}
-            onChange={(e) => setRoleFilter(e.target.value)}
-          >
-            <option value="ALL">All Roles</option>
-            <option value="ADMIN">Admins</option>
-            <option value="SUPERVISOR">Supervisors</option>
-            <option value="EMPLOYEE">Employees</option>
-          </select>
-        </div>
-      </div>
-
       <DataTable 
         data={filteredMembers}
         columns={[
@@ -175,6 +150,23 @@ export function TeamManagementView() {
         loading={loading}
         onSearch={(q) => setSearchTerm(q)}
         searchPlaceholder="Search by name, email or ID..."
+        filters={
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Role</label>
+              <select 
+                className="w-full h-9 px-3 rounded-lg border border-slate-200 bg-slate-50 text-sm focus:ring-2 focus:ring-blue-500/20 outline-hidden transition-all cursor-pointer"
+                value={roleFilter}
+                onChange={(e) => setRoleFilter(e.target.value)}
+              >
+                <option value="ALL">All Roles</option>
+                <option value="ADMIN">Admins</option>
+                <option value="SUPERVISOR">Supervisors</option>
+                <option value="EMPLOYEE">Employees</option>
+              </select>
+            </div>
+          </div>
+        }
         actions={(m) => (
           <div className="flex justify-end gap-2">
             <Button variant="ghost" size="icon" onClick={() => { setEditingMember(m); setIsModalOpen(true); }} className="text-slate-400 hover:text-blue-600">
