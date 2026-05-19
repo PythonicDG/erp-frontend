@@ -1,11 +1,12 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm, useFormContext, FormProvider } from 'react-hook-form';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { FormField } from '@/services/workflow-service';
+import { settingsService, CompanyProfile } from '@/services/settings-service';
 import { Project } from '@/services/project-service';
 import { Info, Plus, Trash2 } from 'lucide-react';
 
@@ -222,6 +223,13 @@ const FileFieldField = ({
 }) => {
   const { watch, setValue } = useFormContext();
   const fileData = watch(field.name);
+  const [profile, setProfile] = useState<CompanyProfile | null>(null);
+
+  useEffect(() => {
+    settingsService.getCompanyProfile()
+      .then(data => setProfile(data))
+      .catch(() => null);
+  }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -255,8 +263,9 @@ const FileFieldField = ({
     const fileType = fileData.type;
     const isImage = fileType.startsWith('image/') || /\.(jpg|jpeg|png|gif)$/i.test(fileName);
     const underApproval = isUnderApproval(stageStatus);
+    const isApproved = stageStatus === 'Approved';
 
-    if (underApproval && isImage) {
+    if ((underApproval || isApproved) && isImage) {
       const img = new Image();
       img.src = fileData.base64;
       img.onload = () => {
@@ -279,10 +288,15 @@ const FileFieldField = ({
         ctx.translate(canvas.width / 2, canvas.height / 2);
         ctx.rotate(-45 * Math.PI / 180);
         ctx.font = `bold ${size}px 'Inter', sans-serif`;
-        ctx.fillStyle = 'rgba(239, 68, 68, 0.16)'; // Semi-transparent red
+        ctx.fillStyle = isApproved ? 'rgba(16, 185, 129, 0.16)' : 'rgba(239, 68, 68, 0.16)'; // Green for approved, Red for under approval
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('UNDER APPROVAL', 0, -size / 2);
+        
+        const watermarkText = isApproved 
+          ? (profile?.watermark_released || 'RELEASED') 
+          : (profile?.watermark_under_approval || 'UNDER APPROVAL');
+          
+        ctx.fillText(watermarkText, 0, -size / 2);
         
         if (submittedByName) {
           const smallSize = Math.max(12, Math.floor(size / 3.5));
@@ -318,11 +332,11 @@ const FileFieldField = ({
       
       {fileData?.base64 ? (
         <div className="relative overflow-hidden flex items-center justify-between p-3 rounded-lg border border-slate-200 bg-slate-50/50">
-          {/* Under Approval Visual Watermark overlay */}
-          {isUnderApproval(stageStatus) && (
+          {/* Dynamic Visual Watermark overlay */}
+          {(isUnderApproval(stageStatus) || stageStatus === 'Approved') && (
             <div className="absolute inset-y-0 right-[150px] left-[120px] pointer-events-none flex items-center justify-center opacity-[0.16] select-none overflow-hidden hidden sm:flex">
-              <span className="text-[11px] font-black text-rose-600 uppercase tracking-widest rotate-[-12deg] border-2 border-rose-400 rounded px-2 whitespace-nowrap bg-rose-50/10">
-                Under Approval
+              <span className={`text-[11px] font-black uppercase tracking-widest rotate-[-12deg] border-2 rounded px-2 whitespace-nowrap bg-rose-50/10 ${stageStatus === 'Approved' ? 'text-emerald-600 border-emerald-400' : 'text-rose-600 border-rose-400'}`}>
+                {stageStatus === 'Approved' ? (profile?.watermark_released || 'RELEASED') : (profile?.watermark_under_approval || 'UNDER APPROVAL')}
               </span>
             </div>
           )}
@@ -334,8 +348,10 @@ const FileFieldField = ({
             <div className="min-w-0">
               <p className="text-sm font-semibold text-slate-900 truncate">{fileData.name}</p>
               <p className="text-xs text-slate-400">
-                {isUnderApproval(stageStatus) ? (
-                  <span className="text-rose-600 font-medium">Under Approval • {submittedByName ? `By ${submittedByName}` : 'Pending'}</span>
+                {stageStatus === 'Approved' || isUnderApproval(stageStatus) ? (
+                  <span className={stageStatus === 'Approved' ? 'text-emerald-600 font-medium' : 'text-rose-600 font-medium'}>
+                    {stageStatus === 'Approved' ? (profile?.watermark_released || 'Released') : (profile?.watermark_under_approval || 'Under Approval')} • {submittedByName ? `By ${submittedByName}` : 'Pending'}
+                  </span>
                 ) : 'File Attachment'}
               </p>
             </div>

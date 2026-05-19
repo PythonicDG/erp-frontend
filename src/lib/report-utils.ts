@@ -29,7 +29,9 @@ export const generateFullProjectReport = async (projectId: string | number) => {
       let stageHtml = `
         <div class="stage-container" style="${pageBreakStyle} margin-bottom: 40px;">
           <h1 class="stage-title">${stage.template_details.name}</h1>
-          ${stage.status !== 'Approved' ? '<div class="stage-watermark">UNDER APPROVAL</div>' : ''}
+          ${stage.status === 'Approved' 
+            ? `<div class="stage-watermark">${c?.watermark_released || 'RELEASED'}</div>` 
+            : `<div class="stage-watermark">${c?.watermark_under_approval || 'UNDER APPROVAL'}</div>`}
           <div class="field-grid">
       `;
 

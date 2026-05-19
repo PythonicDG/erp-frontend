@@ -12,6 +12,8 @@ export interface CompanyProfile {
   country: string;
   logo?: string;
   audit_logs_enabled?: boolean;
+  watermark_under_approval?: string;
+  watermark_released?: string;
 }
 
 export interface AuditLog {

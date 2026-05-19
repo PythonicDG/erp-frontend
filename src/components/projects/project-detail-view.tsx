@@ -300,7 +300,9 @@ export function ProjectDetailView({ id, role }: ProjectDetailViewProps) {
             <div class="company-name">${companyProfile?.name || 'PCEPL Engineering'}</div>
             <div class="logo-container">${logoUrl ? ` <img src="${logoUrl}" class="logo" />` : '<div style="font-size: 20px; font-weight: 800; color: #0f172a; letter-spacing: 0.5px;">ERP SYSTEM</div>'}</div>
           </div>
-          ${activeStage.status !== 'Approved' ? '<div class="watermark">UNDER APPROVAL</div>' : ''}
+          ${activeStage.status === 'Approved' 
+            ? `<div class="watermark">${companyProfile?.watermark_released || 'RELEASED'}</div>` 
+            : `<div class="watermark">${companyProfile?.watermark_under_approval || 'UNDER APPROVAL'}</div>`}
 
           <h1 class="stage-title">${activeStage.template_details.name}</h1>
 

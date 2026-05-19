@@ -34,6 +34,8 @@ const profileSchema = z.object({
   state: z.string().min(2, 'State is required'),
   postal_code: z.string().min(5, 'Valid postal code is required'),
   country: z.string().min(2, 'Country is required'),
+  watermark_under_approval: z.string().min(1, 'Watermark label is required'),
+  watermark_released: z.string().min(1, 'Watermark label is required'),
 });
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
@@ -70,6 +72,8 @@ export function GeneralSettings() {
         state: data.state || '',
         postal_code: data.postal_code || '',
         country: data.country || '',
+        watermark_under_approval: data.watermark_under_approval || 'UNDER APPROVAL',
+        watermark_released: data.watermark_released || 'RELEASED',
       });
     } catch (error) {
       toast.error('Failed to load company profile');
@@ -294,6 +298,29 @@ export function GeneralSettings() {
                 >
                   BROWSE FILES
                 </Button>
+              </div>
+            </div>
+          </Card>
+
+          <Card title="Watermark Control" subtitle="Configure text watermarks dynamically for all generated ECN sheets, documents, and form PDFs.">
+            <div className="space-y-4 py-2">
+              <Input 
+                label="Under Approval Watermark Text" 
+                placeholder="UNDER APPROVAL" 
+                {...register('watermark_under_approval')}
+                error={errors.watermark_under_approval?.message}
+              />
+              <Input 
+                label="Released (Approved) Watermark Text" 
+                placeholder="RELEASED" 
+                {...register('watermark_released')}
+                error={errors.watermark_released?.message}
+              />
+              <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 flex gap-2">
+                <ShieldCheck className="h-4 w-4 text-blue-600 shrink-0 mt-0.5" />
+                <p className="text-[10.5px] text-blue-700 leading-normal">
+                  These labels are stamped dynamically as semi-transparent backdrops on attachment documents, image exports, and printed PDF copies based on approval states.
+                </p>
               </div>
             </div>
           </Card>

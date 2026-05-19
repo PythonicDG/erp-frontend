@@ -279,7 +279,9 @@ export function ECNDetail({ id, role }: ECNDetailProps) {
             <div class="company-name">${companyName}</div>
             <div class="logo-container">${imageLogo}</div>
           </div>
-          ${ecn.status !== 'Approved' ? '<div class="watermark">UNDER APPROVAL</div>' : ''}
+          ${ecn.status === 'Approved' 
+            ? `<div class="watermark">${companyProfile?.watermark_released || 'RELEASED'}</div>` 
+            : `<div class="watermark">${companyProfile?.watermark_under_approval || 'UNDER APPROVAL'}</div>`}
 
           <h1 class="report-title">Engineering Change Request (ECN)</h1>
 
