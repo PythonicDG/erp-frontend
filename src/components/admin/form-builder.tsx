@@ -141,6 +141,7 @@ export function FormBuilder({ stageId }: FormBuilderProps) {
                        <option value="grid">Table / Grid Input</option>
                        <option value="date">Date Picker</option>
                        <option value="boolean">Checkbox</option>
+                        <option value="file">Attachment / File Upload</option>
                      </select>
                    </div>
                    <div className="md:col-span-3">

@@ -101,11 +101,6 @@ export function WorkflowManagementView() {
                      <Edit3 className="h-4 w-4 mr-2" /> Design Form
                    </Button>
                  </Link>
-                 <Link href={`/admin/workflow/${template.id}/settings`}>
-                   <Button variant="ghost" size="icon" className="text-slate-400 hover:text-slate-600">
-                     <Settings2 className="h-4 w-4" />
-                   </Button>
-                 </Link>
                  <Button 
                    variant="ghost" 
                    size="icon" 

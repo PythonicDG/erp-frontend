@@ -128,6 +128,14 @@ export function ProjectDetailView({ id, role }: ProjectDetailViewProps) {
               </table>
             </div>
           `;
+        } else if (f.field_type === 'file') {
+          const fileVal = val || {};
+          formHtml += `
+            <div class="field-item">
+              <label class="field-label">${f.label}</label>
+              <div class="field-value">${fileVal.name ? `📎 ${fileVal.name}` : '—'}</div>
+            </div>
+          `;
         } else {
           formHtml += `
             <div class="field-item">

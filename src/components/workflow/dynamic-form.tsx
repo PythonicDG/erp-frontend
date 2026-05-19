@@ -73,6 +73,7 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
           </div>
         );
       case 'date': return <Input {...commonProps} type="date" />;
+      case 'file': return <FileFieldField field={field} readOnly={readOnly} />;
       default: return null;
     }
   };
@@ -194,6 +195,97 @@ const GridField = ({ field, readOnly }: { field: FormField; readOnly?: boolean }
         <Button type="button" variant="outline" size="sm" onClick={addRow} className="mt-2">
           <Plus className="h-4 w-4 mr-1" /> Add New Row
         </Button>
+      )}
+    </div>
+  );
+};
+
+const FileFieldField = ({ field, readOnly }: { field: FormField; readOnly?: boolean }) => {
+  const { register, watch, setValue, formState: { errors } } = useFormContext();
+  const fileData = watch(field.name);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 10 * 1024 * 1024) {
+      alert('File size exceeds 10MB limit.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setValue(field.name, {
+        name: file.name,
+        type: file.type,
+        base64: reader.result as string
+      });
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveFile = () => {
+    setValue(field.name, null);
+  };
+
+  return (
+    <div className="space-y-1.5 w-full">
+      <label className="block text-sm font-medium text-slate-700 mb-1">{field.label}</label>
+      
+      {fileData?.base64 ? (
+        <div className="flex items-center justify-between p-3 rounded-lg border border-slate-200 bg-slate-50/50">
+          <div className="flex items-center gap-3 overflow-hidden">
+            <div className="h-10 w-10 bg-blue-50 text-blue-600 border border-blue-100 rounded-lg flex items-center justify-center font-bold text-xs uppercase shrink-0">
+              {fileData.name.split('.').pop() || 'FILE'}
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-slate-900 truncate">{fileData.name}</p>
+              <p className="text-xs text-slate-400">File Attachment</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <a
+              href={fileData.base64}
+              download={fileData.name}
+              className="text-xs font-bold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100/80 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+            >
+              Download
+            </a>
+            {!readOnly && (
+              <button
+                type="button"
+                onClick={handleRemoveFile}
+                className="text-xs font-bold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100/80 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+              >
+                Remove
+              </button>
+            )}
+          </div>
+        </div>
+      ) : (
+        <div>
+          {readOnly ? (
+            <p className="text-sm text-slate-400 italic">No attachment uploaded</p>
+          ) : (
+            <div className="relative">
+              <input
+                type="file"
+                onChange={handleFileChange}
+                accept=".pdf,.docx,.xlsx,.xls,.doc,.jpg,.jpeg,.png,.gif"
+                className="hidden"
+                id={`file-upload-${field.id}`}
+              />
+              <label
+                htmlFor={`file-upload-${field.id}`}
+                className="flex items-center justify-center p-4 border-2 border-dashed border-slate-200 hover:border-blue-200 rounded-xl bg-slate-50/50 hover:bg-blue-50/20 cursor-pointer transition-all gap-2 text-slate-500 hover:text-blue-600"
+              >
+                <Plus className="h-4 w-4 text-slate-400" />
+                <span className="text-sm font-semibold">Choose file to upload...</span>
+              </label>
+              <p className="text-[10px] text-slate-400 mt-1">Supports PDF, Word, Excel, Images up to 10MB</p>
+            </div>
+          )}
+        </div>
       )}
     </div>
   );
