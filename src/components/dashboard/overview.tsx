@@ -93,30 +93,16 @@ export function DashboardOverview() {
 
   return (
     <div className="p-4 sm:p-6 md:p-8 max-w-7xl mx-auto space-y-6 sm:space-y-8">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">Executive Dashboard</h1>
           <p className="text-sm text-slate-500">Real-time operational metrics and system overview.</p>
         </div>
-        <div className="flex flex-wrap gap-2.5">
-          <Badge variant="outline" className="bg-white border-slate-200 text-slate-600 px-3 py-1">
-             <Calendar className="h-3 w-3 mr-1.5" /> FY {data.system_info.financial_year}
-          </Badge>
-          <Badge variant="outline" className="bg-blue-50 border-blue-100 text-blue-600 px-3 py-1">
-             <Info className="h-3 w-3 mr-1.5" /> {data.system_info.version}
-          </Badge>
-        </div>
-      </div>
-
-      {/* Year-wise and Month-wise Dashboard Filters */}
-      <Card className="p-4 bg-slate-50/50 border-slate-200 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-        <div className="flex items-center gap-2.5 text-slate-700 font-bold text-sm">
-          <Calendar className="h-4 w-4 text-blue-600" />
-          <span>Operational Dashboard Filter</span>
-        </div>
-        <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+        
+        {/* Year and Month Dashboard Filters on top-right */}
+        <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto shrink-0">
           {/* Year Dropdown */}
-          <div className="w-full sm:w-40 relative">
+          <div className="w-full sm:w-36 relative">
             <select
               value={selectedYear}
               onChange={(e) => setSelectedYear(e.target.value)}
@@ -132,7 +118,7 @@ export function DashboardOverview() {
           </div>
 
           {/* Month Dropdown */}
-          <div className="w-full sm:w-44 relative">
+          <div className="w-full sm:w-40 relative">
             <select
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(e.target.value)}
@@ -156,13 +142,13 @@ export function DashboardOverview() {
                 setSelectedYear('all');
                 setSelectedMonth('all');
               }}
-              className="text-xs text-blue-600 hover:bg-blue-50 font-bold whitespace-nowrap"
+              className="text-xs text-blue-600 hover:bg-blue-50 font-bold whitespace-nowrap h-10 px-3.5 rounded-xl transition-all"
             >
-              Reset to All-time
+              Reset
             </Button>
           )}
         </div>
-      </Card>
+      </div>
 
       {/* Quick Stats */}
       <div className={`stats-grid transition-opacity duration-300 ${isRefreshing ? 'opacity-50 pointer-events-none' : ''}`}>
