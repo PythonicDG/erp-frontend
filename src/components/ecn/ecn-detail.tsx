@@ -66,13 +66,11 @@ export function ECNDetail({ id, role }: ECNDetailProps) {
     fetchData();
   }, [id]);
 
-  // Handle auto-trigger print from query param
+    // Handle auto-trigger print from query param
   useEffect(() => {
     if (ecn && searchParams.get('print') === 'true') {
-      // Small timeout to allow render completion
       const timer = setTimeout(() => {
-        window.print();
-        // Clear print query param from URL
+        handlePrint();
         const cleanUrl = window.location.pathname;
         window.history.replaceState({}, '', cleanUrl);
       }, 500);
@@ -81,7 +79,366 @@ export function ECNDetail({ id, role }: ECNDetailProps) {
   }, [ecn, searchParams]);
 
   const handlePrint = () => {
-    window.print();
+    if (!ecn) return;
+
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      toast.error('Please allow popups to view report');
+      return;
+    }
+
+    const companyName = companyProfile?.name || 'PCEPL Engineering';
+    const imageLogo = logoUrl 
+      ? `<img src="${logoUrl}" style="height: 48px; object-fit: contain;" alt="Company Logo" />` 
+      : '<div style="font-size: 20px; font-weight: 800; color: #0f172a; letter-spacing: 0.5px;">ERP SYSTEM</div>';
+
+    // 1. Details of Change rows
+    const detailsRows = ecn.details_of_change?.filter(row => row.description?.trim() || row.reason?.trim()).map((row, idx) => `
+      <tr>
+        <td style="text-align: center; font-weight: 600; color: #64748b; padding: 10px 12px; border: 1px solid #e2e8f0;">${row.sr_no || idx + 1}</td>
+        <td style="font-weight: 500; color: #0f172a; white-space: pre-wrap; line-height: 1.5; padding: 10px 12px; border: 1px solid #e2e8f0;">${row.description}</td>
+        <td style="color: #475569; white-space: pre-wrap; line-height: 1.5; padding: 10px 12px; border: 1px solid #e2e8f0;">${row.reason}</td>
+      </tr>
+    `).join('') || '<tr><td colspan="3" style="text-align: center; color: #94a3b8; padding: 20px; border: 1px solid #e2e8f0;">No change details provided</td></tr>';
+
+    // 2. Impact analysis rows
+    const impactRows = ecn.impact_analysis?.map((row, idx) => `
+      <tr>
+        <td style="font-weight: 600; color: #334155; padding: 10px 12px; border: 1px solid #e2e8f0;">${row.name}</td>
+        <td style="text-align: center; padding: 10px 12px; border: 1px solid #e2e8f0;">
+          <span style="display: inline-block; padding: 2px 8px; font-size: 10px; font-weight: 700; border-radius: 4px; ${row.selection === 'Yes' ? 'background-color: #fef3c7; color: #d97706; border: 1px solid #fde68a;' : 'background-color: #f1f5f9; color: #475569; border: 1px solid #e2e8f0;'}">
+            ${row.selection}
+          </span>
+        </td>
+        <td style="color: #475569; padding: 10px 12px; border: 1px solid #e2e8f0;">${row.remarks || '—'}</td>
+      </tr>
+    `).join('') || '';
+
+    // 3. Action plan rows
+    const actionRows = ecn.action_plan?.filter(row => row.action?.trim()).map((row, idx) => `
+      <tr>
+        <td style="font-weight: 500; color: #0f172a; white-space: pre-wrap; line-height: 1.5; padding: 10px 12px; border: 1px solid #e2e8f0;">${row.action}</td>
+        <td style="font-weight: 600; color: #334155; padding: 10px 12px; border: 1px solid #e2e8f0;">${row.responsible || '—'}</td>
+        <td style="font-family: monospace; color: #64748b; padding: 10px 12px; border: 1px solid #e2e8f0;">${row.target_date ? new Date(row.target_date).toLocaleDateString(undefined, { dateStyle: 'medium' }) : '—'}</td>
+        <td style="color: #475569; padding: 10px 12px; border: 1px solid #e2e8f0;">${row.remark || '—'}</td>
+      </tr>
+    `).join('') || '<tr><td colspan="4" style="text-align: center; color: #94a3b8; padding: 20px; border: 1px solid #e2e8f0;">No action items defined</td></tr>';
+
+    const ecnDateStr = ecn.ecn_date ? new Date(ecn.ecn_date).toLocaleDateString(undefined, { dateStyle: 'medium' }) : '—';
+    const oldRevDateStr = ecn.old_revision_date ? new Date(ecn.old_revision_date).toLocaleDateString(undefined, { dateStyle: 'medium' }) : '—';
+
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>ECN Report - ${ecn.ecn_number || 'Draft'}</title>
+          <style>
+            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+            
+            body { 
+              font-family: 'Inter', sans-serif; 
+              color: #0f172a; 
+              line-height: 1.6; 
+              padding: 40px; 
+              margin: 0; 
+              background-color: #ffffff;
+            }
+            
+            .header { 
+              display: flex; 
+              justify-content: space-between; 
+              align-items: center; 
+              border-bottom: 2px solid #000000; /* Black horizontal separator line */
+              padding-bottom: 16px; 
+              margin-bottom: 25px; 
+            }
+            
+            .company-name { 
+              font-size: 16px; 
+              font-weight: 700; 
+              color: #0f172a; 
+              text-transform: uppercase; 
+              letter-spacing: 0.5px;
+            }
+            
+            .logo-container { 
+              height: 48px; 
+              display: flex;
+              align-items: center;
+            }
+            
+            .report-title { 
+              font-size: 20px; 
+              font-weight: 700; 
+              color: #000000; 
+              margin-top: 15px;
+              margin-bottom: 30px; 
+              text-transform: uppercase; 
+              letter-spacing: 0.5px;
+              text-align: center; /* Centered Form Name */
+            }
+
+            .section-card {
+              border: 1px solid #e2e8f0;
+              border-radius: 8px;
+              padding: 20px;
+              margin-bottom: 25px;
+              background-color: #ffffff;
+              page-break-inside: avoid;
+            }
+
+            .section-title {
+              font-size: 11px;
+              font-weight: 700;
+              color: #64748b;
+              text-transform: uppercase;
+              letter-spacing: 0.05em;
+              border-bottom: 1px solid #f1f5f9;
+              padding-bottom: 8px;
+              margin-top: 0;
+              margin-bottom: 16px;
+            }
+
+            .metadata-grid {
+              display: grid;
+              grid-template-columns: repeat(3, 1fr);
+              gap: 16px;
+            }
+
+            .meta-item {
+              display: flex;
+              flex-direction: column;
+              gap: 4px;
+            }
+
+            .meta-label {
+              font-size: 9px;
+              font-weight: 600;
+              color: #94a3b8;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+            }
+
+            .meta-value {
+              font-size: 12px;
+              font-weight: 500;
+              color: #0f172a;
+            }
+
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-top: 5px;
+              font-size: 12px;
+            }
+
+            table th {
+              background-color: #f8fafc;
+              text-align: left;
+              padding: 10px 12px;
+              font-weight: 600;
+              color: #475569;
+              border: 1px solid #e2e8f0;
+            }
+
+            table td {
+              padding: 10px 12px;
+              border: 1px solid #e2e8f0;
+              color: #334155;
+            }
+
+            @media print {
+              body { 
+                padding: 0; 
+              }
+              @page { 
+                margin: 1.5cm; 
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div class="company-name">${companyName}</div>
+            <div class="logo-container">${imageLogo}</div>
+          </div>
+
+          <h1 class="report-title">Engineering Change Request (ECN)</h1>
+
+          <!-- Section 1: Details -->
+          <div class="section-card">
+            <h3 class="section-title">Section 1: Project & Customer Details</h3>
+            <div class="metadata-grid">
+              <div class="meta-item">
+                <span class="meta-label">ECN Number</span>
+                <span class="meta-value" style="font-weight: 700; color: #2563eb; font-family: monospace;">${ecn.ecn_number || 'Draft'}</span>
+              </div>
+              <div class="meta-item">
+                <span class="meta-label">ECN Date</span>
+                <span class="meta-value">${ecnDateStr}</span>
+              </div>
+              <div class="meta-item">
+                <span class="meta-label">Status</span>
+                <span class="meta-value" style="font-weight: 600; color: #d97706;">${ecn.status}</span>
+              </div>
+
+              <div class="meta-item" style="grid-column: span 3; border-top: 1px solid #f1f5f9; padding-top: 12px; margin-top: 4px;"></div>
+
+              <div class="meta-item">
+                <span class="meta-label">Customer Name</span>
+                <span class="meta-value">${ecn.customer_name}</span>
+              </div>
+              <div class="meta-item">
+                <span class="meta-label">Product / Project Name</span>
+                <span class="meta-value" style="font-weight: 600;">${ecn.product_name}</span>
+              </div>
+              <div class="meta-item">
+                <span class="meta-label">Project PID</span>
+                <span class="meta-value" style="font-family: monospace;">${ecn.project_pid}</span>
+              </div>
+
+              <div class="meta-item">
+                <span class="meta-label">Customer Drawing / Part No.</span>
+                <span class="meta-value">${ecn.customer_part_no || '—'}</span>
+              </div>
+              <div class="meta-item">
+                <span class="meta-label">PCEPL Part Number</span>
+                <span class="meta-value">${ecn.pcepl_part_no || '—'}</span>
+              </div>
+              <div class="meta-item">
+                <span class="meta-label">Applicable Standard</span>
+                <span class="meta-value">${ecn.applicable_standard || '—'}</span>
+              </div>
+
+              <div class="meta-item">
+                <span class="meta-label">Inspection Authority</span>
+                <span class="meta-value">${ecn.inspection_authority || '—'}</span>
+              </div>
+              <div class="meta-item">
+                <span class="meta-label">ECN Raised Department</span>
+                <span class="meta-value">${ecn.raised_department || '—'}</span>
+              </div>
+              <div class="meta-item">
+                <span class="meta-label">Change Initiated By</span>
+                <span class="meta-value">${ecn.change_initiated_by || '—'}</span>
+              </div>
+
+              <div class="meta-item">
+                <span class="meta-label">Old Revision No.</span>
+                <span class="meta-value">${ecn.old_revision_no || '—'}</span>
+              </div>
+              <div class="meta-item">
+                <span class="meta-label">Old Revision Date</span>
+                <span class="meta-value">${oldRevDateStr}</span>
+              </div>
+              <div class="meta-item">
+                <span class="meta-label">New Revision</span>
+                <span class="meta-value" style="font-weight: 600; color: #2563eb;">${ecn.new_revision || '—'}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 2: Details of Change -->
+          <div class="section-card">
+            <h3 class="section-title">Section 2: Details of Change</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th style="width: 60px; text-align: center;">Sr. No.</th>
+                  <th style="width: 50%;">Description of Change</th>
+                  <th>Reason for Change</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${detailsRows}
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Section 3: Impact Analysis -->
+          <div class="section-card">
+            <h3 class="section-title">Section 3: Impact Analysis</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th style="width: 40%;">Impact Area Name</th>
+                  <th style="width: 100px; text-align: center;">Applicable?</th>
+                  <th>Remarks / Details</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${impactRows}
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Section 4: Action Plan -->
+          <div class="section-card">
+            <h3 class="section-title">Section 4: Action Plan</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th style="width: 40%;">Action to be Taken</th>
+                  <th style="width: 180px;">Responsible Person</th>
+                  <th style="width: 120px;">Target Date</th>
+                  <th>Remarks</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${actionRows}
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Approvals & Signatures Section -->
+          <div class="approval-section" style="margin-top: 50px; page-break-inside: avoid;">
+            <div style="border-top: 2px solid #000000; margin-bottom: 25px; padding-top: 15px;">
+              <h3 style="font-size: 11px; font-weight: 700; color: #0f172a; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 20px;">Approvals & Signatures</h3>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
+              <div style="border: 1px solid #cbd5e1; border-radius: 8px; padding: 15px; background-color: #f8fafc; display: flex; flex-direction: column; justify-content: space-between; min-height: 115px; box-sizing: border-box;">
+                <span style="font-size: 9px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.05em; display: block;">INITIATED BY</span>
+                <div style="margin-top: 15px; text-align: center;">
+                  <div style="font-size: 12px; font-weight: 700; color: #0f172a;">${ecn.initiator_name || 'Not Set'}</div>
+                  <div style="font-size: 9px; color: #64748b; margin-top: 2px;">Form Submitter</div>
+                </div>
+              </div>
+              <div style="border: 1px solid #cbd5e1; border-radius: 8px; padding: 15px; background-color: #f8fafc; display: flex; flex-direction: column; justify-content: space-between; min-height: 115px; box-sizing: border-box;">
+                <span style="font-size: 9px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.05em; display: block;">REVIEWED BY</span>
+                <div style="margin-top: 15px; text-align: center;">
+                  ${ecn.reviewed_by_name ? `
+                    <div style="font-size: 12px; font-weight: 700; color: #0f172a;">${ecn.reviewed_by_name}</div>
+                    <div style="font-size: 9px; color: #059669; font-weight: 700; margin-top: 2px;">Reviewed ✅</div>
+                  ` : `
+                    <div style="border-bottom: 1px dashed #94a3b8; width: 80%; margin: 15px auto 0 auto; min-height: 18px;"></div>
+                    <div style="font-size: 9px; color: #64748b; margin-top: 5px;">Supervisor Signature</div>
+                  `}
+                </div>
+              </div>
+              <div style="border: 1px solid #cbd5e1; border-radius: 8px; padding: 15px; background-color: #f8fafc; display: flex; flex-direction: column; justify-content: space-between; min-height: 115px; box-sizing: border-box;">
+                <span style="font-size: 9px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.05em; display: block;">APPROVED BY</span>
+                <div style="margin-top: 15px; text-align: center;">
+                  ${ecn.approved_by_name ? `
+                    <div style="font-size: 12px; font-weight: 700; color: #0f172a;">${ecn.approved_by_name}</div>
+                    <div style="font-size: 9px; color: #059669; font-weight: 700; margin-top: 2px;">Approved ✅</div>
+                  ` : `
+                    <div style="border-bottom: 1px dashed #94a3b8; width: 80%; margin: 15px auto 0 auto; min-height: 18px;"></div>
+                    <div style="font-size: 9px; color: #64748b; margin-top: 5px;">Authority Signature</div>
+                  `}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <script>
+            window.onload = () => {
+              window.print();
+              setTimeout(() => { window.close(); }, 500);
+            };
+          </script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
   };
 
   const handleEdit = () => {
@@ -156,9 +513,9 @@ export function ECNDetail({ id, role }: ECNDetailProps) {
             display: flex !important;
             justify-content: space-between !important;
             align-items: center !important;
-            border-bottom: 1.5px solid #e2e8f0 !important;
+            border-bottom: 2px solid #000000 !important; /* Black horizontal separator line */
             padding-bottom: 16px !important;
-            margin-bottom: 35px !important;
+            margin-bottom: 25px !important;
           }
           .print-logo {
             height: 48px !important;
@@ -173,15 +530,14 @@ export function ECNDetail({ id, role }: ECNDetailProps) {
           }
           .print-title {
             display: block !important;
-            font-size: 22px !important;
+            text-align: center !important; /* Centered Form Name */
+            font-size: 20px !important;
             font-weight: 700 !important;
-            color: #0f172a !important;
-            margin-top: 0 !important;
-            margin-bottom: 28px !important;
+            color: #000000 !important;
+            margin-top: 15px !important;
+            margin-bottom: 30px !important;
             text-transform: uppercase !important;
             letter-spacing: 0.5px !important;
-            border-bottom: 1.5px solid #f1f5f9 !important;
-            padding-bottom: 8px !important;
           }
           .card {
             border: none !important;
@@ -349,15 +705,15 @@ export function ECNDetail({ id, role }: ECNDetailProps) {
 
       {/* FORMAL PRINT BANNER HEADER (Only visible during print) */}
       <div className="hidden print-header">
+        <div className="print-company-name">
+          {companyProfile?.name || 'PCEPL Engineering'}
+        </div>
         <div className="logo-container">
           {logoUrl ? (
             <img src={logoUrl} className="print-logo" alt="Company Logo" />
           ) : (
             <div className="text-xl font-extrabold tracking-wide">ERP SYSTEM</div>
           )}
-        </div>
-        <div className="print-company-name">
-          {companyProfile?.name || 'PCEPL Engineering'}
         </div>
       </div>
 
@@ -551,6 +907,53 @@ export function ECNDetail({ id, role }: ECNDetailProps) {
           </div>
         </div>
       </Card>
+      {/* PRINT-ONLY APPROVAL SECTION (At bottom of ECN page) */}
+      <div className="hidden print:block mt-12 page-break-inside-avoid">
+        <div className="border-t border-slate-900 my-6 pt-6">
+          <h3 className="text-xs font-bold text-slate-800 uppercase tracking-widest mb-4">Approvals & Signatures</h3>
+          <div className="grid grid-cols-3 gap-6">
+            <div className="border border-slate-200 rounded-lg p-4 bg-slate-50/50 flex flex-col justify-between min-h-[110px]">
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">INITIATED BY</span>
+              <div className="mt-6 text-center">
+                <div className="text-sm font-bold text-slate-900">{ecn.initiator_name || 'Not Set'}</div>
+                <div className="text-[10px] text-slate-400 mt-1">Form Submitter</div>
+              </div>
+            </div>
+            <div className="border border-slate-200 rounded-lg p-4 bg-slate-50/50 flex flex-col justify-between min-h-[110px]">
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">REVIEWED BY</span>
+              <div className="mt-6 text-center">
+                {ecn.reviewed_by_name ? (
+                  <>
+                    <div className="text-sm font-bold text-slate-900">{ecn.reviewed_by_name}</div>
+                    <div className="text-[10px] text-emerald-600 font-bold mt-1">Reviewed ✅</div>
+                  </>
+                ) : (
+                  <>
+                    <div className="border-b border-dashed border-slate-300 w-3/4 mx-auto min-h-[18px]"></div>
+                    <div className="text-[10px] text-slate-400 mt-2">Supervisor Signature</div>
+                  </>
+                )}
+              </div>
+            </div>
+            <div className="border border-slate-200 rounded-lg p-4 bg-slate-50/50 flex flex-col justify-between min-h-[110px]">
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">APPROVED BY</span>
+              <div className="mt-6 text-center">
+                {ecn.approved_by_name ? (
+                  <>
+                    <div className="text-sm font-bold text-slate-900">{ecn.approved_by_name}</div>
+                    <div className="text-[10px] text-emerald-600 font-bold mt-1">Approved ✅</div>
+                  </>
+                ) : (
+                  <>
+                    <div className="border-b border-dashed border-slate-300 w-3/4 mx-auto min-h-[18px]"></div>
+                    <div className="text-[10px] text-slate-400 mt-2">Authority Signature</div>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

@@ -72,6 +72,49 @@ export const generateFullProjectReport = async (projectId: string | number) => {
         }
       });
 
+      // Add Approvals & Signatures Section
+      stageHtml += `
+          <!-- Approvals & Signatures Section -->
+          <div class="approval-section" style="margin-top: 40px; page-break-inside: avoid;">
+            <div style="border-top: 2px solid #000000; margin-bottom: 20px; padding-top: 15px;">
+              <h3 style="font-size: 11px; font-weight: 700; color: #0f172a; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 15px;">Approvals & Signatures</h3>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
+              <div style="border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px; background-color: #f8fafc; display: flex; flex-direction: column; justify-content: space-between; min-height: 105px; box-sizing: border-box;">
+                <span style="font-size: 8px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.05em; display: block;">INITIATED BY</span>
+                <div style="margin-top: 12px; text-align: center;">
+                  <div style="font-size: 11px; font-weight: 700; color: #0f172a;">${stage.current_submission?.submitted_by_name || 'Not Set'}</div>
+                  <div style="font-size: 8px; color: #64748b; margin-top: 2px;">Form Submitter</div>
+                </div>
+              </div>
+              <div style="border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px; background-color: #f8fafc; display: flex; flex-direction: column; justify-content: space-between; min-height: 105px; box-sizing: border-box;">
+                <span style="font-size: 8px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.05em; display: block;">REVIEWED BY</span>
+                <div style="margin-top: 12px; text-align: center;">
+                  ${stage.status === 'Approved' || stage.status === 'Submitted' || stage.status === 'Pending Approval' ? `
+                    <div style="font-size: 11px; font-weight: 700; color: #0f172a;">Peer Review Verified</div>
+                    <div style="font-size: 8px; color: #059669; font-weight: 700; margin-top: 2px;">Reviewed ✅</div>
+                  ` : `
+                    <div style="border-bottom: 1px dashed #94a3b8; width: 80%; margin: 12px auto 0 auto; min-height: 15px;"></div>
+                    <div style="font-size: 8px; color: #64748b; margin-top: 4px;">Supervisor Signature</div>
+                  `}
+                </div>
+              </div>
+              <div style="border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px; background-color: #f8fafc; display: flex; flex-direction: column; justify-content: space-between; min-height: 105px; box-sizing: border-box;">
+                <span style="font-size: 8px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.05em; display: block;">APPROVED BY</span>
+                <div style="margin-top: 12px; text-align: center;">
+                  ${stage.status === 'Approved' ? `
+                    <div style="font-size: 11px; font-weight: 700; color: #0f172a;">Stage Authorized</div>
+                    <div style="font-size: 8px; color: #059669; font-weight: 700; margin-top: 2px;">Approved ✅</div>
+                  ` : `
+                    <div style="border-bottom: 1px dashed #94a3b8; width: 80%; margin: 12px auto 0 auto; min-height: 15px;"></div>
+                    <div style="font-size: 8px; color: #64748b; margin-top: 4px;">Authority Signature</div>
+                  `}
+                </div>
+              </div>
+            </div>
+          </div>
+      `;
+
       stageHtml += `</div></div>`;
       allStagesHtml += stageHtml;
     });
@@ -96,9 +139,9 @@ export const generateFullProjectReport = async (projectId: string | number) => {
               display: flex; 
               justify-content: space-between; 
               align-items: center; 
-              border-bottom: 1.5px solid #e2e8f0; 
+              border-bottom: 2px solid #000000; /* Black horizontal separator line */
               padding-bottom: 16px; 
-              margin-bottom: 35px; 
+              margin-bottom: 25px; 
             }
             
             .company-name { 
@@ -121,13 +164,12 @@ export const generateFullProjectReport = async (projectId: string | number) => {
             .stage-title { 
               font-size: 20px; 
               font-weight: 700; 
-              color: #0f172a; 
-              margin-top: 0;
-              margin-bottom: 24px; 
+              color: #000000; 
+              margin-top: 15px;
+              margin-bottom: 30px; 
               text-transform: uppercase; 
               letter-spacing: 0.5px;
-              border-bottom: 1px solid #f1f5f9;
-              padding-bottom: 8px;
+              text-align: center; /* Centered Stage Name */
             }
             
             .field-grid { 
@@ -197,10 +239,8 @@ export const generateFullProjectReport = async (projectId: string | number) => {
         </head>
         <body>
           <div class="header">
-            <div class="logo-container">
-              ${logoUrl ? `<img src="${logoUrl}" class="logo" />` : '<div style="font-size: 20px; font-weight: 800; color: #0f172a; letter-spacing: 0.5px;">ERP SYSTEM</div>'}
-            </div>
             <div class="company-name">${c?.name || 'PCEPL Engineering'}</div>
+            <div class="logo-container">${logoUrl ? `<img src="${logoUrl}" class="logo" />` : '<div style="font-size: 20px; font-weight: 800; color: #0f172a; letter-spacing: 0.5px;">ERP SYSTEM</div>'}</div>
           </div>
 
           ${allStagesHtml}
