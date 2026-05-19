@@ -18,10 +18,26 @@ export function CustomerMasterView() {
   const [actionLoading, setActionLoading] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
 
+  // Pagination States
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+
   const fetchCustomers = async () => {
     try {
-      const data = await customerService.getAll({ search: searchQuery });
-      setCustomers(Array.isArray(data) ? data : data.results || []);
+      const data = await customerService.getAll({ 
+        search: searchQuery || undefined,
+        page: currentPage
+      });
+      if (data && data.results) {
+        setCustomers(data.results);
+        setTotalCount(data.count);
+        setTotalPages(Math.ceil(data.count / 10));
+      } else {
+        setCustomers(Array.isArray(data) ? data : []);
+        setTotalCount(Array.isArray(data) ? data.length : 0);
+        setTotalPages(1);
+      }
     } catch (error) {
       toast.error('Failed to load customers');
     } finally {
@@ -57,11 +73,15 @@ export function CustomerMasterView() {
   };
 
   useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
+
+  useEffect(() => {
     const timer = setTimeout(() => {
       fetchCustomers();
     }, 300);
     return () => clearTimeout(timer);
-  }, [searchQuery]);
+  }, [searchQuery, currentPage]);
 
   const handleAdd = () => {
     setSelectedCustomer(null);
@@ -122,6 +142,10 @@ export function CustomerMasterView() {
         onDelete={handleDelete}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalCount={totalCount}
+        onPageChange={setCurrentPage}
       />
 
       {isFormOpen && (

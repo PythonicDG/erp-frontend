@@ -15,7 +15,8 @@ import {
   Info,
   ArrowUpRight,
   ArrowDownRight,
-  ChevronDown
+  ChevronDown,
+  FileEdit
 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -190,12 +191,12 @@ export function DashboardOverview() {
           onClick={() => router.push(user ? `/${user.role.toLowerCase()}/dashboard/closed` : '/dashboard/closed')}
         />
         <StatCard 
-          title="Active Customers" 
-          value={data.stats.customers} 
-          icon={<Users className="text-indigo-600" />} 
-          trend="+3" 
+          title="ECN" 
+          value={data.stats.ecns ?? 0} 
+          icon={<FileEdit className="text-indigo-600" />} 
+          trend="" 
           color="indigo"
-          onClick={() => router.push(user ? `/${user.role.toLowerCase()}/customers` : '/customers')}
+          onClick={() => router.push(user ? `/${user.role.toLowerCase()}/ecn` : '/ecn')}
         />
         <StatCard 
           title="Completion Rate" 

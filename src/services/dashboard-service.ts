@@ -7,6 +7,7 @@ export interface DashboardData {
     closed: number;
     open: number;
     customers: number;
+    ecns?: number;
     completion_rate: number;
   };
   charts: {
