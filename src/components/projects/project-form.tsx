@@ -30,6 +30,8 @@ const projectSchema = z.object({
   date_received: z.string().min(1, 'Date received is required'),
   target_completion_date: z.string().optional().nullable(),
   status: z.enum(['Draft', 'Open', 'In Progress', 'Closed', 'Rejected', 'Pending Approval']).default('Open'),
+  project_complexity: z.enum(['High', 'Medium', 'Low']).default('Medium'),
+  planned_start_date: z.string().optional().nullable(),
 });
 
 type ProjectFormData = z.infer<typeof projectSchema>;
@@ -169,6 +171,8 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({ initialData, role }) =
       target_completion_date: initialData?.target_completion_date || '',
       status: initialData?.status || 'Open',
       customer: initialData?.customer?.toString() || '',
+      project_complexity: initialData?.project_complexity || 'Medium',
+      planned_start_date: initialData?.planned_start_date || '',
     },
   });
 
@@ -480,7 +484,7 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({ initialData, role }) =
 
         {/* Sidebar / Timeline */}
         <div className="space-y-6">
-          <Card title="Timeline" subtitle="Project reception and deadlines">
+          <Card title="Timeline & Planning" subtitle="Project deadlines and complexity">
             <div className="space-y-6">
               <Input
                 label="Date Received"
@@ -493,6 +497,24 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({ initialData, role }) =
                 type="date"
                 {...register('target_completion_date')}
                 error={errors.target_completion_date?.message}
+              />
+              
+              <Select
+                label="Project Complexity"
+                options={[
+                  { label: 'High Complexity (e.g. JB)', value: 'High' },
+                  { label: 'Medium Complexity (Standard)', value: 'Medium' },
+                  { label: 'Low Complexity', value: 'Low' },
+                ]}
+                {...register('project_complexity')}
+                error={errors.project_complexity?.message}
+              />
+
+              <Input
+                label="Initial Planned Start Date (Stage 1)"
+                type="date"
+                {...register('planned_start_date')}
+                error={errors.planned_start_date?.message}
               />
               
               <div className="p-4 bg-blue-50 rounded-lg border border-blue-100">

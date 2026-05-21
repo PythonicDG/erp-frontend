@@ -22,13 +22,14 @@ export function StageCreateView() {
       const payload = {
         ...data,
         order: parseInt(data.order),
+        duration_high: parseInt(data.duration_high) || 5,
+        duration_medium: parseInt(data.duration_medium) || 3,
+        duration_low: parseInt(data.duration_low) || 1,
         is_active: true,
         is_mandatory: true,
         approval_required: true,
       };
       
-      // In a real app, we'd call workflowService.createTemplate(payload)
-      // Since I haven't added that method yet, I'll use a direct axios call or update service
       const response = await (await import('@/lib/axios')).default.post('/api/workflow/templates/', payload);
       
       toast.success('Stage created successfully!');
@@ -90,7 +91,44 @@ export function StageCreateView() {
                 <option value="ADMIN">Admin</option>
               </select>
             </div>
-            <div className="md:col-span-2">
+            
+            {/* Standard Durations Section */}
+            <div className="md:col-span-2 border-t border-slate-100 pt-4 mt-2">
+              <h3 className="text-sm font-semibold text-slate-800 mb-1">Standard Durations (Days)</h3>
+              <p className="text-xs text-slate-400">Specify default calendar days for each project complexity level.</p>
+            </div>
+            <div>
+              <Input 
+                label="High Complexity" 
+                type="number"
+                defaultValue="5"
+                placeholder="e.g. 5"
+                {...register('duration_high', { required: 'Duration for high complexity is required' })}
+                error={errors.duration_high?.message as string}
+              />
+            </div>
+            <div>
+              <Input 
+                label="Medium Complexity" 
+                type="number"
+                defaultValue="3"
+                placeholder="e.g. 3"
+                {...register('duration_medium', { required: 'Duration for medium complexity is required' })}
+                error={errors.duration_medium?.message as string}
+              />
+            </div>
+            <div>
+              <Input 
+                label="Low Complexity" 
+                type="number"
+                defaultValue="1"
+                placeholder="e.g. 1"
+                {...register('duration_low', { required: 'Duration for low complexity is required' })}
+                error={errors.duration_low?.message as string}
+              />
+            </div>
+
+            <div className="md:col-span-2 border-t border-slate-100 pt-4 mt-2">
                <div className="space-y-1.5">
                   <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest">Description</label>
                   <textarea 

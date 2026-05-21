@@ -42,6 +42,8 @@ export interface Project {
   activities?: ActivityLog[];
   current_stage?: string;
   customer?: number | string;
+  project_complexity?: 'High' | 'Medium' | 'Low';
+  planned_start_date?: string | null;
 }
 
 export interface ProjectFilters {

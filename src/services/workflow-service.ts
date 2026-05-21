@@ -38,6 +38,9 @@ export interface StageTemplate {
   approval_required: boolean;
   allow_attachments: boolean;
   fields: FormField[];
+  duration_high: number;
+  duration_medium: number;
+  duration_low: number;
 }
 
 export interface StageSubmission {
@@ -58,6 +61,12 @@ export interface StageInstance {
   completed_at: string | null;
   current_submission: StageSubmission | null;
   activities: any[];
+  planned_start_date: string | null;
+  planned_end_date: string | null;
+  duration: number | null;
+  actual_completion_date: string | null;
+  delay_days: number | null;
+  remarks: string | null;
 }
 
 export const workflowService = {
@@ -97,5 +106,11 @@ export const workflowService = {
   createTemplate: async (data: any) => {
     const response = await api.post('/api/workflow/templates/', data);
     return response.data;
+  },
+
+  updateTemplate: async (id: number, data: any) => {
+    const response = await api.patch<StageTemplate>(`/api/workflow/templates/${id}/`, data);
+    return response.data;
   }
 };
+

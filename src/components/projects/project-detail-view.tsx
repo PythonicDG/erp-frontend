@@ -13,7 +13,8 @@ import {
   MessageSquare,
   Printer,
   Download,
-  FileText
+  FileText,
+  Settings2
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
@@ -24,6 +25,21 @@ import { settingsService, CompanyProfile } from '@/services/settings-service';
 import { DynamicForm } from '@/components/workflow/dynamic-form';
 import { generateFullProjectReport } from '@/lib/report-utils';
 import toast from 'react-hot-toast';
+
+const parseDateString = (str: string) => {
+  const parts = str.split('-');
+  if (parts.length === 3) {
+    return new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+  }
+  return new Date(str);
+};
+
+const formatDateString = (date: Date) => {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+};
 
 interface ProjectDetailViewProps {
   id: string;
@@ -37,6 +53,104 @@ export function ProjectDetailView({ id, role }: ProjectDetailViewProps) {
   const [activeStage, setActiveStage] = useState<StageInstance | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<'workflow' | 'dd-plan'>('workflow');
+  const [editComplexity, setEditComplexity] = useState<'High' | 'Medium' | 'Low'>('Medium');
+  const [editStartDate, setEditStartDate] = useState<string>('');
+  const [isUpdatingTimeline, setIsUpdatingTimeline] = useState(false);
+
+  useEffect(() => {
+    if (project) {
+      setEditComplexity(project.project_complexity || 'Medium');
+      setEditStartDate(project.planned_start_date || '');
+    }
+  }, [project]);
+
+  const formatDate = (dateStr: string | null) => {
+    if (!dateStr) return '—';
+    try {
+      const date = new Date(dateStr);
+      return date.toLocaleDateString('en-IN', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric'
+      });
+    } catch (e) {
+      return dateStr;
+    }
+  };
+
+  const getCascadedStages = (): StageInstance[] => {
+    if (!project) return [];
+    
+    const complexity = project.project_complexity || 'Medium';
+    const initialStartStr = project.planned_start_date || project.date_received || new Date().toISOString().split('T')[0];
+    
+    let currentDate = parseDateString(initialStartStr);
+    // If it's a Sunday, bump it to Monday
+    if (currentDate.getDay() === 0) {
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+    
+    return stages.map((stage) => {
+      let dur = 0;
+      const temp = stage.template_details;
+      if (complexity === 'High') {
+        dur = temp?.duration_high ?? 5;
+      } else if (complexity === 'Low') {
+        dur = temp?.duration_low ?? 1;
+      } else {
+        dur = temp?.duration_medium ?? 3;
+      }
+      
+      const isConfigured = !!project.planned_start_date;
+      
+      let pStart = stage.planned_start_date;
+      let pEnd = stage.planned_end_date;
+      let resolvedDur = stage.duration !== null ? stage.duration : dur;
+
+      if (!isConfigured) {
+        // Calculate preview start date
+        pStart = formatDateString(currentDate);
+        
+        // Calculate preview end date = start + duration
+        const end = new Date(currentDate);
+        end.setDate(end.getDate() + resolvedDur);
+        pEnd = formatDateString(end);
+        
+        // Next stage starts on the calendar day after end, skipping Sunday
+        const nextStart = new Date(end);
+        nextStart.setDate(nextStart.getDate() + 1);
+        if (nextStart.getDay() === 0) { // Sunday is 0 in JS getDay()
+          nextStart.setDate(nextStart.getDate() + 1); // bump to Monday
+        }
+        currentDate = nextStart;
+      }
+
+      return {
+        ...stage,
+        planned_start_date: pStart,
+        planned_end_date: pEnd,
+        duration: resolvedDur
+      };
+    });
+  };
+
+  const handleUpdateTimeline = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsUpdatingTimeline(true);
+    try {
+      await projectService.update(id, {
+        project_complexity: editComplexity,
+        planned_start_date: editStartDate || null
+      });
+      toast.success('D&D Plan timeline recalculated successfully!', { icon: '📅' });
+      await fetchData();
+    } catch (error) {
+      toast.error('Failed to update timeline');
+    } finally {
+      setIsUpdatingTimeline(false);
+    }
+  };
 
   const canEdit = (role === 'admin' || role === 'supervisor' || role === 'employee');
   const canApprove = (role === 'admin' || role === 'supervisor');
@@ -54,7 +168,6 @@ export function ProjectDetailView({ id, role }: ProjectDetailViewProps) {
       setStages(stagesList);
       setCompanyProfile(companyData);
       
-      // Default to the first unlocked or in-progress stage
       const current = stagesList.find((s: any) => s.status === 'Unlocked' || s.status === 'Submitted' || s.status === 'Pending Approval' || s.status === 'Rejected' || s.status === 'In Progress') 
                      || stagesList.find((s: any) => s.status === 'Approved' && s.order === stagesList.length)
                      || stagesList[0];
@@ -169,7 +282,7 @@ export function ProjectDetailView({ id, role }: ProjectDetailViewProps) {
               display: flex; 
               justify-content: space-between; 
               align-items: center; 
-              border-bottom: 2px solid #000000; /* Black horizontal separator line */ 
+              border-bottom: 2px solid #000000;
               padding-bottom: 16px; 
               margin-bottom: 35px; 
             }
@@ -195,7 +308,7 @@ export function ProjectDetailView({ id, role }: ProjectDetailViewProps) {
               margin-bottom: 30px; 
               text-transform: uppercase; 
               letter-spacing: 0.5px;
-              text-align: center; /* Centered Form Name */
+              text-align: center;
             }
             
             .report-section { 
@@ -269,7 +382,7 @@ export function ProjectDetailView({ id, role }: ProjectDetailViewProps) {
               transform: translate(-50%, -50%) rotate(-45deg);
               font-size: 75px;
               font-weight: 800;
-              color: rgba(239, 68, 68, 0.08); /* Semi-transparent light red */
+              color: rgba(239, 68, 68, 0.08);
               z-index: 9999;
               pointer-events: none;
               white-space: nowrap;
@@ -308,7 +421,6 @@ export function ProjectDetailView({ id, role }: ProjectDetailViewProps) {
 
           ${formHtml}
 
-          <!-- Approvals & Signatures Section -->
           <div class="approval-section" style="margin-top: 50px; page-break-inside: avoid;">
             <div style="border-top: 2px solid #000000; margin-bottom: 25px; padding-top: 15px;">
               <h3 style="font-size: 11px; font-weight: 700; color: #0f172a; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 20px;">Approvals & Signatures</h3>
@@ -465,8 +577,11 @@ export function ProjectDetailView({ id, role }: ProjectDetailViewProps) {
              {stages.map((stage, i) => (
                <button 
                  key={stage.id} 
-                 onClick={() => setActiveStage(stage)}
-                 className={`relative z-10 flex flex-col items-center gap-3 group cursor-pointer transition-all ${activeStage?.id === stage.id ? 'scale-105' : 'hover:scale-105'}`}
+                 onClick={() => {
+                   setActiveStage(stage);
+                   setActiveTab('workflow');
+                 }}
+                 className={`relative z-10 flex flex-col items-center gap-3 group cursor-pointer transition-all ${activeStage?.id === stage.id && activeTab === 'workflow' ? 'scale-105' : 'hover:scale-105'}`}
                >
                  {/* The Circle Icon */}
                  <div className={`h-8 w-8 rounded-full flex items-center justify-center border-2 shadow-lg transition-all duration-300 ${
@@ -483,10 +598,10 @@ export function ProjectDetailView({ id, role }: ProjectDetailViewProps) {
 
                  {/* The Stage Label */}
                  <div className="flex flex-col items-center max-w-[120px]">
-                    <span className={`text-[10px] font-bold uppercase tracking-widest text-center leading-tight transition-colors duration-300 ${activeStage?.id === stage.id ? 'text-white' : 'text-white/50 group-hover:text-white/80'}`}>
+                    <span className={`text-[10px] font-bold uppercase tracking-widest text-center leading-tight transition-colors duration-300 ${activeStage?.id === stage.id && activeTab === 'workflow' ? 'text-white' : 'text-white/50 group-hover:text-white/80'}`}>
                       {stage.template_details.name}
                     </span>
-                    {activeStage?.id === stage.id && (
+                    {activeStage?.id === stage.id && activeTab === 'workflow' && (
                       <div className="h-1 w-1 rounded-full bg-white mt-1 shadow-xs shadow-white" />
                     )}
                  </div>
@@ -496,159 +611,364 @@ export function ProjectDetailView({ id, role }: ProjectDetailViewProps) {
         </div>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Active Stage Form/Details */}
-        <div className="lg:col-span-2 space-y-6">
-          {activeStage ? (
-            <Card 
-              title={`Stage ${activeStage.order}: ${activeStage.template_details.name}`}
-              subtitle={activeStage.template_details.description}
-              className="shadow-xl shadow-blue-500/5"
-            >
-              <div className="mb-6 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Badge variant={
-                    activeStage.status === 'Approved' ? 'success' : 
-                    (activeStage.status === 'Submitted' || activeStage.status === 'Pending Approval') ? 'pending' :
-                    activeStage.status === 'Rejected' ? 'danger' : 'info'
-                  }>
-                    {(activeStage.status === 'Submitted' || activeStage.status === 'Pending Approval') ? 'Under Review' : activeStage.status}
-                  </Badge>
-                  
-                  {(activeStage.status === 'Submitted' || activeStage.status === 'Pending Approval') && (
-                    <span className="text-[10px] font-bold text-slate-400 uppercase bg-slate-50 px-2 py-0.5 rounded border border-slate-100">
-                      Pending with: {activeStage.template_details.assigned_role === 'ADMIN' ? 'Administrator' : 'Supervisor'}
-                    </span>
-                  )}
-                  
-                  {(activeStage.status === 'Approved' || activeStage.status === 'Submitted' || activeStage.status === 'Pending Approval') && (
-                    <span className="text-xs text-slate-400 flex items-center gap-1">
-                      <Lock className="h-3 w-3" /> Read Only View
-                    </span>
-                  )}
-                </div>
-
-                {(activeStage.status === 'Approved' || activeStage.status === 'Submitted' || activeStage.status === 'Pending Approval') && (
-                  <Button variant="ghost" size="sm" onClick={handlePrintStage} className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 text-xs font-bold">
-                    <Printer className="h-3 w-3 mr-1.5" /> PRINT REPORT
-                  </Button>
-                )}
-              </div>
-
-              {activeStage.status === 'Locked' ? (
-                <div className="py-12 text-center space-y-4">
-                  <Lock className="h-12 w-12 mx-auto text-slate-300" />
-                  <p className="text-slate-500 font-medium">This stage is currently locked. Complete previous stages to unlock.</p>
-                </div>
-              ) : (
-                <div className="space-y-8">
-                  {/* Rejection Alert */}
-                  {activeStage.status === 'Rejected' && activeStage.current_submission?.remarks && (
-                    <div className="bg-red-50 border border-red-100 p-4 rounded-lg flex gap-3 text-red-800">
-                      <MessageSquare className="h-5 w-5 shrink-0" />
-                      <div>
-                        <p className="font-bold text-sm">Rejection Remark:</p>
-                        <p className="text-sm">{activeStage.current_submission.remarks}</p>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* 1. Project & Customer Details */}
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
-                      <div className="h-6 w-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold">1</div>
-                      <h3 className="font-bold text-slate-900 uppercase tracking-tight text-sm">Project & Customer Details</h3>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 bg-slate-50/50 p-4 rounded-xl border border-slate-100">
-                      <div className="space-y-1">
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Customer Name</p>
-                        <p className="text-sm font-semibold text-slate-700">{project.customer_name}</p>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Project Name</p>
-                        <p className="text-sm font-semibold text-slate-700">{project.name}</p>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Customer Part Number</p>
-                        <p className="text-sm font-semibold text-slate-700">{project.customer_part_no || 'N/A'}</p>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Project Type</p>
-                        <p className="text-sm font-semibold text-slate-700">{project.project_type}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <DynamicForm 
-                    key={activeStage.id}
-                    fields={activeStage.template_details.fields || []}
-                    project={project}
-                    initialData={activeStage.current_submission?.data}
-                    onSubmit={handleFormSubmit}
-                    isLoading={actionLoading}
-                    readOnly={activeStage.status === 'Approved' || activeStage.status === 'Submitted' || activeStage.status === 'Pending Approval' || !canEdit}
-                    stageStatus={activeStage.status}
-                    submittedByName={activeStage.current_submission?.submitted_by_name}
-                  />
-
-                  {/* Supervisor Approval Actions */}
-                  {(activeStage.status === 'Submitted' || activeStage.status === 'Pending Approval') && canApprove && (
-                    <div className="flex gap-3 pt-6 border-t border-slate-100">
-                      <Button variant="danger" onClick={handleReject} loading={actionLoading}>Reject Stage</Button>
-                      <Button onClick={handleApprove} loading={actionLoading} className="bg-emerald-600 hover:bg-emerald-700">Approve Stage</Button>
-                    </div>
-                  )}
-                </div>
-              )}
-            </Card>
-          ) : (
-            <div className="p-20 text-center text-slate-400">Select a stage from the timeline to view details</div>
-          )}
-        </div>
-
-        {/* Sidebar: Activity & Info */}
-        <div className="space-y-6">
-          <Card title="Project Summary">
-             <div className="space-y-4">
-                <div className="flex justify-between text-sm">
-                  <span className="text-slate-500">Total Stages:</span>
-                  <span className="font-bold text-slate-900">{stages.length}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-slate-500">Completed:</span>
-                  <span className="font-bold text-emerald-600">{completedStages}</span>
-                </div>
-                <div className="space-y-2 pt-2">
-                  <div className="flex justify-between text-xs font-bold uppercase text-slate-400">
-                    <span>Overall Progress</span>
-                    <span>{progressPercent}%</span>
-                  </div>
-                  <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-blue-600 transition-all duration-1000" 
-                      style={{ width: `${progressPercent}%` }}
-                    />
-                  </div>
-                </div>
-             </div>
-          </Card>
-
-          <Card title="Activity Timeline">
-             <div className="space-y-6">
-               {(activeStage?.activities || []).map((act: any) => (
-                 <div key={act.id} className="relative pl-6 pb-4 last:pb-0 border-l border-slate-100">
-                    <div className="absolute left-[-5px] top-0 h-2.5 w-2.5 rounded-full bg-slate-300" />
-                    <p className="text-sm font-bold text-slate-900">{act.action}</p>
-                    <p className="text-xs text-slate-500">{act.performed_by_name} • {new Date(act.timestamp).toLocaleString()}</p>
-                    {act.remarks && <p className="text-xs mt-1 italic text-slate-400">"{act.remarks}"</p>}
-                 </div>
-               ))}
-               {(!activeStage || activeStage.activities.length === 0) && <p className="text-xs text-slate-400 italic">No recent activity</p>}
-             </div>
-          </Card>
-        </div>
+      {/* Premium Tab Selection Header */}
+      <div className="flex border-b border-slate-200 gap-6 mt-4">
+        <button
+          type="button"
+          onClick={() => setActiveTab('workflow')}
+          className={`pb-3 text-sm font-semibold border-b-2 transition-all cursor-pointer ${
+            activeTab === 'workflow'
+              ? 'border-blue-600 text-blue-600'
+              : 'border-transparent text-slate-400 hover:text-slate-700'
+          }`}
+        >
+          Active Workflow Stage
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('dd-plan')}
+          className={`pb-3 text-sm font-semibold border-b-2 transition-all cursor-pointer flex items-center gap-2 ${
+            activeTab === 'dd-plan'
+              ? 'border-blue-600 text-blue-600'
+              : 'border-transparent text-slate-400 hover:text-slate-700'
+          }`}
+        >
+          📅 Design & Development Plan (D&D Control Sheet)
+        </button>
       </div>
+
+      {activeTab === 'workflow' ? (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Active Stage Form/Details */}
+          <div className="lg:col-span-2 space-y-6">
+            {activeStage ? (
+              <Card 
+                title={`Stage ${activeStage.order}: ${activeStage.template_details.name}`}
+                subtitle={activeStage.template_details.description}
+                className="shadow-xl shadow-blue-500/5"
+              >
+                <div className="mb-6 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Badge variant={
+                      activeStage.status === 'Approved' ? 'success' : 
+                      (activeStage.status === 'Submitted' || activeStage.status === 'Pending Approval') ? 'pending' :
+                      activeStage.status === 'Rejected' ? 'danger' : 'info'
+                    }>
+                      {(activeStage.status === 'Submitted' || activeStage.status === 'Pending Approval') ? 'Under Review' : activeStage.status}
+                    </Badge>
+                    
+                    {(activeStage.status === 'Submitted' || activeStage.status === 'Pending Approval') && (
+                      <span className="text-[10px] font-bold text-slate-400 uppercase bg-slate-50 px-2 py-0.5 rounded border border-slate-100">
+                        Pending with: {activeStage.template_details.assigned_role === 'ADMIN' ? 'Administrator' : 'Supervisor'}
+                      </span>
+                    )}
+                    
+                    {(activeStage.status === 'Approved' || activeStage.status === 'Submitted' || activeStage.status === 'Pending Approval') && (
+                      <span className="text-xs text-slate-400 flex items-center gap-1">
+                        <Lock className="h-3 w-3" /> Read Only View
+                      </span>
+                    )}
+                  </div>
+
+                  {(activeStage.status === 'Approved' || activeStage.status === 'Submitted' || activeStage.status === 'Pending Approval') && (
+                    <Button variant="ghost" size="sm" onClick={handlePrintStage} className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 text-xs font-bold">
+                      <Printer className="h-3 w-3 mr-1.5" /> PRINT REPORT
+                    </Button>
+                  )}
+                </div>
+
+                {activeStage.status === 'Locked' ? (
+                  <div className="py-12 text-center space-y-4">
+                    <Lock className="h-12 w-12 mx-auto text-slate-300" />
+                    <p className="text-slate-500 font-medium">This stage is currently locked. Complete previous stages to unlock.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-8">
+                    {/* Rejection Alert */}
+                    {activeStage.status === 'Rejected' && activeStage.current_submission?.remarks && (
+                      <div className="bg-red-50 border border-red-100 p-4 rounded-lg flex gap-3 text-red-800">
+                        <MessageSquare className="h-5 w-5 shrink-0" />
+                        <div>
+                          <p className="font-bold text-sm">Rejection Remark:</p>
+                          <p className="text-sm">{activeStage.current_submission.remarks}</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* 1. Project & Customer Details */}
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
+                        <div className="h-6 w-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold">1</div>
+                        <h3 className="font-bold text-slate-900 uppercase tracking-tight text-sm">Project & Customer Details</h3>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 bg-slate-50/50 p-4 rounded-xl border border-slate-100">
+                        <div className="space-y-1">
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Customer Name</p>
+                          <p className="text-sm font-semibold text-slate-700">{project.customer_name}</p>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Project Name</p>
+                          <p className="text-sm font-semibold text-slate-700">{project.name}</p>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Customer Part Number</p>
+                          <p className="text-sm font-semibold text-slate-700">{project.customer_part_no || 'N/A'}</p>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Project Type</p>
+                          <p className="text-sm font-semibold text-slate-700">{project.project_type}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <DynamicForm 
+                      key={activeStage.id}
+                      fields={activeStage.template_details.fields || []}
+                      project={project}
+                      initialData={activeStage.current_submission?.data}
+                      onSubmit={handleFormSubmit}
+                      isLoading={actionLoading}
+                      readOnly={activeStage.status === 'Approved' || activeStage.status === 'Submitted' || activeStage.status === 'Pending Approval' || !canEdit}
+                      stageStatus={activeStage.status}
+                      submittedByName={activeStage.current_submission?.submitted_by_name}
+                    />
+
+                    {/* Supervisor Approval Actions */}
+                    {(activeStage.status === 'Submitted' || activeStage.status === 'Pending Approval') && canApprove && (
+                      <div className="flex gap-3 pt-6 border-t border-slate-100">
+                        <Button variant="danger" onClick={handleReject} loading={actionLoading}>Reject Stage</Button>
+                        <Button onClick={handleApprove} loading={actionLoading} className="bg-emerald-600 hover:bg-emerald-700">Approve Stage</Button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </Card>
+            ) : (
+              <div className="p-20 text-center text-slate-400">Select a stage from the timeline to view details</div>
+            )}
+          </div>
+
+          {/* Sidebar: Activity & Info */}
+          <div className="space-y-6">
+            <Card title="Project Summary">
+               <div className="space-y-4">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-slate-500">Total Stages:</span>
+                    <span className="font-bold text-slate-900">{stages.length}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-slate-500">Completed:</span>
+                    <span className="font-bold text-emerald-600">{completedStages}</span>
+                  </div>
+                  <div className="space-y-2 pt-2">
+                    <div className="flex justify-between text-xs font-bold uppercase text-slate-400">
+                      <span>Overall Progress</span>
+                      <span>{progressPercent}%</span>
+                    </div>
+                    <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-blue-600 transition-all duration-1000" 
+                        style={{ width: `${progressPercent}%` }}
+                      />
+                    </div>
+                  </div>
+               </div>
+            </Card>
+
+            <Card title="Activity Timeline">
+               <div className="space-y-6">
+                 {(activeStage?.activities || []).map((act: any) => (
+                   <div key={act.id} className="relative pl-6 pb-4 last:pb-0 border-l border-slate-100">
+                      <div className="absolute left-[-5px] top-0 h-2.5 w-2.5 rounded-full bg-slate-300" />
+                      <p className="text-sm font-bold text-slate-900">{act.action}</p>
+                      <p className="text-xs text-slate-500">{act.performed_by_name} • {new Date(act.timestamp).toLocaleString()}</p>
+                      {act.remarks && <p className="text-xs mt-1 italic text-slate-400">"{act.remarks}"</p>}
+                   </div>
+                 ))}
+                 {(!activeStage || activeStage.activities.length === 0) && <p className="text-xs text-slate-400 italic">No recent activity</p>}
+               </div>
+            </Card>
+          </div>
+        </div>
+      ) : (
+        /* D&D Spreadsheet Control Sheet */
+        <div className="space-y-6">
+          {/* Timeline & Recalculation settings card */}
+          {canEdit && (
+            <Card 
+              title="D&D Plan Configuration" 
+              subtitle="Modify project complexity and start date to automatically regenerate the timeline cascade."
+              className="bg-slate-50/50 shadow-xs border-slate-200"
+            >
+              <form onSubmit={handleUpdateTimeline} className="flex flex-col md:flex-row md:items-end gap-6 max-w-4xl">
+                <div className="space-y-1.5 flex-1 min-w-[200px]">
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest">Project Complexity</label>
+                  <select 
+                    value={editComplexity} 
+                    onChange={(e) => setEditComplexity(e.target.value as any)}
+                    className="w-full h-11 px-4 rounded-xl border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-blue-500/20 outline-hidden transition-all font-semibold text-slate-700"
+                  >
+                    <option value="High">High Complexity (High Stage Durations)</option>
+                    <option value="Medium">Medium Complexity (Default Durations)</option>
+                    <option value="Low">Low Complexity (1-day Durations)</option>
+                  </select>
+                </div>
+                <div className="space-y-1.5 flex-1 min-w-[200px]">
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest">Initial Planned Start Date</label>
+                  <input 
+                    type="date" 
+                    required
+                    value={editStartDate}
+                    onChange={(e) => setEditStartDate(e.target.value)}
+                    className="w-full h-11 px-4 rounded-xl border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-blue-500/20 outline-hidden transition-all font-semibold text-slate-700"
+                  />
+                </div>
+                <div>
+                  <Button 
+                    type="submit" 
+                    loading={isUpdatingTimeline}
+                    className="h-11 shadow-lg shadow-blue-500/10 px-6 font-bold"
+                  >
+                    <Settings2 className="h-4 w-4 mr-2" /> Recalculate Timeline
+                  </Button>
+                </div>
+              </form>
+            </Card>
+          )}
+
+          {/* D&D Spreadsheet Sheet Card */}
+          <Card 
+            title="Design & Development Plan Spreadsheet" 
+            subtitle={`Integrated Control Sheet • Project ID: ${project.pid} • Complexity: ${project.project_complexity || 'Medium'}`}
+            className="overflow-hidden shadow-xl shadow-blue-500/5"
+          >
+            {(() => {
+              const cascadedStages = getCascadedStages();
+              const isConfigured = !!project.planned_start_date;
+              return (
+                <div className="space-y-4">
+                  {!isConfigured && (
+                    <div className="bg-amber-50/80 border border-amber-200/60 p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-amber-800 shadow-xs mb-2">
+                      <div className="flex gap-3">
+                        <span className="text-xl">📅</span>
+                        <div>
+                          <p className="font-bold text-sm">Draft D&D Plan Preview</p>
+                          <p className="text-xs text-amber-700 mt-0.5">
+                            Showing proposed timeline starting from Date Received: <strong className="text-slate-800">{formatDate(project.date_received)}</strong>. Modify properties and click "Recalculate Timeline" above to activate and save this plan.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="overflow-x-auto border border-slate-200 rounded-2xl shadow-xs bg-white">
+                    <table className="w-full text-left border-collapse min-w-[1000px]">
+                      <thead>
+                        <tr className="bg-slate-50 border-b border-slate-200 text-slate-400 font-mono text-[10px] uppercase tracking-widest">
+                          <th className="py-4 px-4 font-bold text-center border-r border-slate-200 w-12">Sr.</th>
+                          <th className="py-4 px-6 font-bold border-r border-slate-200">Activity Description</th>
+                          <th className="py-4 px-5 font-bold border-r border-slate-200 w-44">Planned Start Date</th>
+                          <th className="py-4 px-4 font-bold text-center border-r border-slate-200 w-24">Duration</th>
+                          <th className="py-4 px-5 font-bold border-r border-slate-200 w-44">Planned End Date</th>
+                          <th className="py-4 px-5 font-bold border-r border-slate-200 w-44">Actual Completion</th>
+                          <th className="py-4 px-4 font-bold text-center border-r border-slate-200 w-28">Delay</th>
+                          <th className="py-4 px-5 font-bold border-r border-slate-200 w-36">Status</th>
+                          <th className="py-4 px-6 font-bold">Remarks / Notes</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 font-sans text-xs">
+                        {cascadedStages.map((stage, idx) => {
+                          const isDelayed = stage.delay_days !== null && stage.delay_days > 0;
+                          const isApproved = stage.status === 'Approved';
+                          
+                          return (
+                            <tr 
+                              key={stage.id} 
+                              className={`hover:bg-slate-50/50 transition-colors ${
+                                stage.status === 'In Progress' || stage.status === 'Unlocked' 
+                                  ? 'bg-blue-50/20' 
+                                  : ''
+                              }`}
+                            >
+                              <td className="py-3.5 px-4 font-semibold text-slate-500 text-center border-r border-slate-200 bg-slate-50/30">
+                                {idx + 1}
+                              </td>
+                              <td className="py-3.5 px-6 font-bold text-slate-900 border-r border-slate-200">
+                                {stage.template_details.name}
+                              </td>
+                              <td className={`py-3.5 px-5 font-mono border-r border-slate-200 ${!isConfigured ? 'text-amber-600 italic bg-amber-50/10' : 'text-slate-600'}`}>
+                                {formatDate(stage.planned_start_date)}
+                              </td>
+                              <td className="py-3.5 px-4 text-center font-semibold text-slate-700 border-r border-slate-200 font-mono">
+                                {stage.duration !== null ? `${stage.duration} Days` : '—'}
+                              </td>
+                              <td className={`py-3.5 px-5 font-mono border-r border-slate-200 ${!isConfigured ? 'text-amber-600 italic bg-amber-50/10' : 'text-slate-600'}`}>
+                                {formatDate(stage.planned_end_date)}
+                              </td>
+                              <td className="py-3.5 px-5 font-mono border-r border-slate-200">
+                                {stage.actual_completion_date ? (
+                                  <span className="text-emerald-700 font-semibold bg-emerald-50 px-2 py-1 rounded-md border border-emerald-100">
+                                    {formatDate(stage.actual_completion_date)}
+                                  </span>
+                                ) : (
+                                  <span className="text-slate-400 font-medium">Not Completed</span>
+                                )}
+                              </td>
+                              <td className="py-3.5 px-4 text-center border-r border-slate-200">
+                                {isApproved ? (
+                                  isDelayed ? (
+                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-600 border border-rose-100 uppercase tracking-tight">
+                                      ⚠️ +{stage.delay_days} Days
+                                    </span>
+                                  ) : (
+                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-100 uppercase tracking-tight">
+                                      On Time
+                                    </span>
+                                  )
+                                ) : (
+                                  <span className="text-slate-400">—</span>
+                                )}
+                              </td>
+                              <td className="py-3.5 px-5 border-r border-slate-200">
+                                <Badge 
+                                  variant={
+                                    stage.status === 'Approved' ? 'success' : 
+                                    (stage.status === 'Submitted' || stage.status === 'Pending Approval') ? 'pending' :
+                                    stage.status === 'Rejected' ? 'danger' :
+                                    stage.status === 'Unlocked' || stage.status === 'In Progress' ? 'info' : 'outline'
+                                  }
+                                >
+                                  {stage.status === 'Pending Approval' ? 'Under Review' : stage.status}
+                                </Badge>
+                              </td>
+                              <td className="py-3.5 px-6 text-slate-500 max-w-[200px] truncate" title={stage.remarks || stage.current_submission?.remarks || ''}>
+                                {stage.remarks || stage.current_submission?.remarks || '—'}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div className="flex justify-between items-center bg-slate-50 p-4 rounded-xl border border-slate-100 mt-2 text-xs">
+                    <div className="flex gap-6 text-slate-500 font-medium">
+                      <span>🔄 Timeline cascades sequentially: <strong className="text-slate-700">Planned End = Start + Duration</strong>.</span>
+                      <span>📆 Sundays are automatically skipped to match corporate scheduling guidelines.</span>
+                    </div>
+                    {isConfigured && (
+                      <Button variant="outline" size="sm" onClick={handlePrintFullReport} className="text-slate-600 border-slate-200">
+                        <Printer className="h-4 w-4 mr-2" /> Print Control Sheet
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
+          </Card>
+        </div>
+      )}
     </div>
   );
 }
