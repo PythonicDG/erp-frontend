@@ -30,6 +30,53 @@ export function WorkflowManagementView() {
   const [durationEdits, setDurationEdits] = useState<Record<number, { duration_high: number; duration_medium: number; duration_low: number }>>({});
   const [savingPlan, setSavingPlan] = useState(false);
 
+  // Native Drag and Drop States
+  const [canDrag, setCanDrag] = useState<number | null>(null);
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedIndex(index);
+    setIsDragging(true);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (draggedIndex === null || draggedIndex === index) return;
+    
+    // Swap items in templates array locally for real-time visual feedback
+    const newTemplates = [...templates];
+    const draggedItem = newTemplates[draggedIndex];
+    newTemplates.splice(draggedIndex, 1);
+    newTemplates.splice(index, 0, draggedItem);
+    
+    setDraggedIndex(index);
+    setTemplates(newTemplates);
+  };
+
+  const handleDragEnd = async () => {
+    setDraggedIndex(null);
+    setIsDragging(false);
+    setCanDrag(null);
+    
+    // Generate new ordering payload
+    const orders = templates.map((t, idx) => ({
+      id: t.id,
+      order: idx + 1
+    }));
+    
+    const toastId = toast.loading('Saving stage sequences & propagating to active projects...');
+    try {
+      await workflowService.reorderTemplates(orders);
+      toast.success('Stage sequence updated and propagated to all active projects!', { id: toastId });
+      fetchTemplates();
+    } catch (error) {
+      toast.error('Failed to update stage sequence', { id: toastId });
+      fetchTemplates();
+    }
+  };
+
   const fetchTemplates = async () => {
     try {
       const data = await workflowService.getTemplates();
@@ -181,14 +228,43 @@ export function WorkflowManagementView() {
       </div>
 
       {activeTab === 'stages' ? (
-        <div className="grid grid-cols-1 gap-4">
-        {templates.map((template, index) => (
-          <Card key={template.id} className="group hover:border-blue-200 transition-all cursor-default overflow-hidden">
-            <div className="flex flex-col sm:flex-row sm:items-center p-6 gap-6">
-               <div className="flex flex-col items-center justify-center h-12 w-12 rounded-xl bg-slate-50 text-slate-400 font-bold border border-slate-100 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
-                  <span className="text-xs uppercase opacity-60">Step</span>
-                  <span className="text-lg leading-none">{index + 1}</span>
-               </div>
+        <div className="space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs text-slate-400 px-1 gap-2">
+            <span className="flex items-center gap-1.5 font-medium">
+              💡 Drag the grip handle <GripVertical className="h-3.5 w-3.5 animate-pulse" /> to reorder stages.
+            </span>
+            <span className="font-semibold text-blue-600 bg-blue-50 border border-blue-100/50 px-2 py-0.5 rounded-md flex items-center gap-1">
+              ⚡ Propagation to active project stages is automatic
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4">
+          {templates.map((template, index) => (
+            <Card 
+              key={template.id} 
+              draggable={canDrag === template.id}
+              onDragStart={(e) => handleDragStart(e, index)}
+              onDragOver={(e) => handleDragOver(e, index)}
+              onDragEnd={handleDragEnd}
+              className={`group transition-all duration-300 ${
+                draggedIndex === index
+                  ? 'opacity-40 border-dashed border-blue-500 bg-blue-50/10 scale-[0.98] shadow-inner'
+                  : 'hover:border-blue-200 shadow-sm hover:shadow-md'
+              } cursor-default overflow-hidden`}
+            >
+              <div className="flex flex-col sm:flex-row sm:items-center p-6 gap-6">
+                 <div 
+                   className="cursor-grab active:cursor-grabbing p-1 rounded-lg hover:bg-slate-100 transition-colors shrink-0 select-none"
+                   onMouseDown={() => setCanDrag(template.id)}
+                   onMouseUp={() => setCanDrag(null)}
+                 >
+                   <GripVertical className="h-5 w-5 text-slate-400 hover:text-slate-600" />
+                 </div>
+                 
+                 <div className="flex flex-col items-center justify-center h-12 w-12 rounded-xl bg-slate-50 text-slate-400 font-bold border border-slate-100 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors shrink-0">
+                    <span className="text-xs uppercase opacity-60">Step</span>
+                    <span className="text-lg leading-none">{index + 1}</span>
+                 </div>
                
                <div className="flex-1 space-y-1">
                  <div className="flex items-center gap-3">
@@ -238,6 +314,7 @@ export function WorkflowManagementView() {
             </div>
           </Card>
         ))}
+        </div>
 
         {templates.length === 0 && (
           <div className="py-20 text-center border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50/50">

@@ -111,6 +111,11 @@ export const workflowService = {
   updateTemplate: async (id: number, data: any) => {
     const response = await api.patch<StageTemplate>(`/api/workflow/templates/${id}/`, data);
     return response.data;
+  },
+
+  reorderTemplates: async (orders: { id: number; order: number }[]) => {
+    const response = await api.post('/api/workflow/templates/reorder/', { orders });
+    return response.data;
   }
 };
 
