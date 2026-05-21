@@ -196,6 +196,46 @@ export function ProjectDetailView({ id, role }: ProjectDetailViewProps) {
     const formData = activeStage.current_submission?.data || {};
     const fields = activeStage.template_details.fields || [];
 
+    const projectDetailsHtml = `
+      <div class="project-details-card">
+        <h3 class="project-details-card-title">Project & Customer References</h3>
+        <div class="project-details-grid">
+          <div class="project-details-item">
+            <span class="project-details-label">Project ID (PID)</span>
+            <span class="project-details-value" style="font-family: monospace;">${project.pid}</span>
+          </div>
+          <div class="project-details-item">
+            <span class="project-details-label">Project Name</span>
+            <span class="project-details-value">${project.name}</span>
+          </div>
+          <div class="project-details-item">
+            <span class="project-details-label">Customer Name</span>
+            <span class="project-details-value">${project.customer_name}</span>
+          </div>
+          <div class="project-details-item">
+            <span class="project-details-label">Project Type</span>
+            <span class="project-details-value">${project.project_type}</span>
+          </div>
+          <div class="project-details-item">
+            <span class="project-details-label">Customer Part No</span>
+            <span class="project-details-value">${project.customer_part_no || '—'}</span>
+          </div>
+          <div class="project-details-item">
+            <span class="project-details-label">PCEPL Part No</span>
+            <span class="project-details-value">${project.pcepl_part_no || '—'}</span>
+          </div>
+          <div class="project-details-item">
+            <span class="project-details-label">Applicable Standard</span>
+            <span class="project-details-value">${project.applicable_standard || '—'}</span>
+          </div>
+          <div class="project-details-item">
+            <span class="project-details-label">Project Complexity</span>
+            <span class="project-details-value">${project.project_complexity || 'Medium'}</span>
+          </div>
+        </div>
+      </div>
+    `;
+
     let formHtml = '';
     const sections: Record<string, any[]> = {};
     fields.forEach(f => {
@@ -398,6 +438,52 @@ export function ProjectDetailView({ id, role }: ProjectDetailViewProps) {
               color: #1e293b; 
             }
             
+            .project-details-card {
+              margin-bottom: 25px;
+              background-color: #f8fafc;
+              border: 1px solid #e2e8f0;
+              border-radius: 12px;
+              padding: 16px;
+              box-sizing: border-box;
+            }
+            
+            .project-details-card-title {
+              font-size: 11px;
+              font-weight: 700;
+              color: #475569;
+              text-transform: uppercase;
+              letter-spacing: 0.05em;
+              margin: 0 0 12px 0;
+              border-bottom: 1px solid #e2e8f0;
+              padding-bottom: 6px;
+            }
+            
+            .project-details-grid {
+              display: grid;
+              grid-template-columns: repeat(4, 1fr);
+              gap: 12px;
+            }
+            
+            .project-details-item {
+              display: flex;
+              flex-direction: column;
+              gap: 2px;
+            }
+            
+            .project-details-label {
+              font-size: 9px;
+              font-weight: 600;
+              color: #64748b;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+            }
+            
+            .project-details-value {
+              font-size: 11px;
+              font-weight: 700;
+              color: #0f172a;
+            }
+            
             @media print {
               body { 
                 padding: 0; 
@@ -418,6 +504,8 @@ export function ProjectDetailView({ id, role }: ProjectDetailViewProps) {
             : `<div class="watermark">${companyProfile?.watermark_under_approval || 'UNDER APPROVAL'}</div>`}
 
           <h1 class="stage-title">${activeStage.template_details.name}</h1>
+
+          ${projectDetailsHtml}
 
           ${formHtml}
 

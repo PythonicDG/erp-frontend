@@ -26,12 +26,55 @@ export const generateFullProjectReport = async (projectId: string | number) => {
       // Avoid putting a page break before the very first page
       const pageBreakStyle = index > 0 ? 'page-break-before: always;' : '';
 
+      const projectDetailsHtml = `
+        <div class="project-details-card">
+          <h3 class="project-details-card-title">Project & Customer References</h3>
+          <div class="project-details-grid">
+            <div class="project-details-item">
+              <span class="project-details-label">Project ID (PID)</span>
+              <span class="project-details-value" style="font-family: monospace;">${p.pid}</span>
+            </div>
+            <div class="project-details-item">
+              <span class="project-details-label">Project Name</span>
+              <span class="project-details-value">${p.name}</span>
+            </div>
+            <div class="project-details-item">
+              <span class="project-details-label">Customer Name</span>
+              <span class="project-details-value">${p.customer_name}</span>
+            </div>
+            <div class="project-details-item">
+              <span class="project-details-label">Project Type</span>
+              <span class="project-details-value">${p.project_type}</span>
+            </div>
+            <div class="project-details-item">
+              <span class="project-details-label">Customer Part No</span>
+              <span class="project-details-value">${p.customer_part_no || '—'}</span>
+            </div>
+            <div class="project-details-item">
+              <span class="project-details-label">PCEPL Part No</span>
+              <span class="project-details-value">${p.pcepl_part_no || '—'}</span>
+            </div>
+            <div class="project-details-item">
+              <span class="project-details-label">Applicable Standard</span>
+              <span class="project-details-value">${p.applicable_standard || '—'}</span>
+            </div>
+            <div class="project-details-item">
+              <span class="project-details-label">Project Complexity</span>
+              <span class="project-details-value">${p.project_complexity || 'Medium'}</span>
+            </div>
+          </div>
+        </div>
+      `;
+
       let stageHtml = `
         <div class="stage-container" style="${pageBreakStyle} margin-bottom: 40px;">
           <h1 class="stage-title">${stage.template_details.name}</h1>
           ${stage.status === 'Approved' 
             ? `<div class="stage-watermark">${c?.watermark_released || 'RELEASED'}</div>` 
             : `<div class="stage-watermark">${c?.watermark_under_approval || 'UNDER APPROVAL'}</div>`}
+          
+          ${projectDetailsHtml}
+          
           <div class="field-grid">
       `;
 
@@ -247,6 +290,52 @@ export const generateFullProjectReport = async (projectId: string | number) => {
               border: 1px solid #e2e8f0; 
               color: #1e293b; 
             }
+             
+             .project-details-card {
+               margin-bottom: 25px;
+               background-color: #f8fafc;
+               border: 1px solid #e2e8f0;
+               border-radius: 12px;
+               padding: 16px;
+               box-sizing: border-box;
+             }
+             
+             .project-details-card-title {
+               font-size: 11px;
+               font-weight: 700;
+               color: #475569;
+               text-transform: uppercase;
+               letter-spacing: 0.05em;
+               margin: 0 0 12px 0;
+               border-bottom: 1px solid #e2e8f0;
+               padding-bottom: 6px;
+             }
+             
+             .project-details-grid {
+               display: grid;
+               grid-template-columns: repeat(4, 1fr);
+               gap: 12px;
+             }
+             
+             .project-details-item {
+               display: flex;
+               flex-direction: column;
+               gap: 2px;
+             }
+             
+             .project-details-label {
+               font-size: 9px;
+               font-weight: 600;
+               color: #64748b;
+               text-transform: uppercase;
+               letter-spacing: 0.5px;
+             }
+             
+             .project-details-value {
+               font-size: 11px;
+               font-weight: 700;
+               color: #0f172a;
+             }
             
             @media print {
               body { 
