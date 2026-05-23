@@ -65,7 +65,7 @@ export function ProjectDetailView({ id, role }: ProjectDetailViewProps) {
     }
   }, [project]);
 
-  const formatDate = (dateStr: string | null) => {
+  const formatDate = (dateStr: string | null | undefined) => {
     if (!dateStr) return '—';
     try {
       const date = new Date(dateStr);
@@ -564,6 +564,320 @@ export function ProjectDetailView({ id, role }: ProjectDetailViewProps) {
     await generateFullProjectReport(id);
   };
 
+  const handlePrintControlSheet = () => {
+    if (!project) return;
+
+    const logoUrl = companyProfile?.logo 
+      ? (companyProfile.logo.startsWith('http') ? companyProfile.logo : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}${companyProfile.logo}`)
+      : null;
+
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    const cascadedStages = getCascadedStages();
+    const isConfigured = !!project.planned_start_date;
+
+    const rowsHtml = cascadedStages.map((stage, idx) => {
+      const isDelayed = stage.delay_days !== null && stage.delay_days > 0;
+      const isApproved = stage.status === 'Approved';
+      const actualCompletion = stage.actual_completion_date ? formatDate(stage.actual_completion_date) : '—';
+      const delayText = isApproved ? (isDelayed ? `+${stage.delay_days} Days` : 'On Time') : '—';
+      const delayClass = isApproved && isDelayed ? 'text-red-600 font-bold' : (isApproved ? 'text-emerald-600 font-bold' : '');
+      
+      return `
+        <tr>
+          <td class="text-center font-bold">${idx + 1}</td>
+          <td class="font-bold">${stage.template_details.name}</td>
+          <td class="font-mono text-center">${formatDate(stage.planned_start_date)}</td>
+          <td class="text-center font-mono">${stage.duration !== null ? `${stage.duration} Days` : '—'}</td>
+          <td class="font-mono text-center">${formatDate(stage.planned_end_date)}</td>
+          <td class="font-mono text-center">${actualCompletion}</td>
+          <td class="text-center font-mono ${delayClass}">${delayText}</td>
+          <td class="text-center font-semibold">${stage.status === 'Pending Approval' ? 'Under Review' : stage.status}</td>
+          <td class="remarks-cell">${stage.remarks || stage.current_submission?.remarks || '—'}</td>
+        </tr>
+      `;
+    }).join('');
+
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>${companyProfile?.name || 'ERP'} - D&D Control Sheet</title>
+          <style>
+            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+            
+            body { 
+              font-family: 'Inter', sans-serif; 
+              color: #0f172a; 
+              line-height: 1.5; 
+              padding: 40px; 
+              margin: 0; 
+              background-color: #ffffff;
+            }
+            
+            .header { 
+              display: flex; 
+              justify-content: space-between; 
+              align-items: center; 
+              border-bottom: 2px solid #000000;
+              padding-bottom: 16px; 
+              margin-bottom: 30px; 
+            }
+            
+            .company-name { 
+              font-size: 16px; 
+              font-weight: 700; 
+              color: #0f172a; 
+              text-transform: uppercase; 
+              letter-spacing: 0.5px;
+            }
+            
+            .logo { 
+              height: 48px; 
+              object-fit: contain; 
+            }
+            
+            .sheet-title { 
+              font-size: 20px; 
+              font-weight: 700; 
+              color: #000000; 
+              margin-top: 10px;
+              margin-bottom: 25px; 
+              text-transform: uppercase; 
+              letter-spacing: 0.5px;
+              text-align: center;
+            }
+            
+            .project-details-card {
+              margin-bottom: 25px;
+              background-color: #f8fafc;
+              border: 1px solid #e2e8f0;
+              border-radius: 12px;
+              padding: 16px;
+              box-sizing: border-box;
+            }
+            
+            .project-details-card-title {
+              font-size: 11px;
+              font-weight: 700;
+              color: #475569;
+              text-transform: uppercase;
+              letter-spacing: 0.05em;
+              margin: 0 0 12px 0;
+              border-bottom: 1px solid #e2e8f0;
+              padding-bottom: 6px;
+            }
+            
+            .project-details-grid {
+              display: grid;
+              grid-template-columns: repeat(4, 1fr);
+              gap: 12px;
+            }
+            
+            .project-details-item {
+              display: flex;
+              flex-direction: column;
+              gap: 2px;
+            }
+            
+            .project-details-label {
+              font-size: 9px;
+              font-weight: 600;
+              color: #64748b;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+            }
+            
+            .project-details-value {
+              font-size: 11px;
+              font-weight: 700;
+              color: #0f172a;
+            }
+            
+            .control-table { 
+              width: 100%; 
+              border-collapse: collapse; 
+              margin-top: 15px; 
+              font-size: 11px; 
+            }
+            
+            .control-table th { 
+              background: #f8fafc; 
+              text-align: left; 
+              padding: 10px 8px; 
+              font-weight: 700; 
+              color: #475569; 
+              border: 1px solid #cbd5e1; 
+              text-transform: uppercase;
+              font-size: 9px;
+              letter-spacing: 0.05em;
+            }
+            
+            .control-table td { 
+              padding: 10px 8px; 
+              border: 1px solid #cbd5e1; 
+              color: #1e293b; 
+            }
+            
+            .text-center {
+              text-align: center;
+            }
+            
+            .font-mono {
+              font-family: monospace;
+              font-size: 11px;
+            }
+            
+            .font-bold {
+              font-weight: 700;
+            }
+            
+            .font-semibold {
+              font-weight: 600;
+            }
+            
+            .text-red-600 {
+              color: #dc2626;
+            }
+            
+            .text-emerald-600 {
+              color: #059669;
+            }
+            
+            .remarks-cell {
+              max-width: 150px;
+              word-wrap: break-word;
+              font-style: italic;
+              color: #64748b;
+            }
+
+            .watermark-draft {
+              position: fixed;
+              top: 55%;
+              left: 50%;
+              transform: translate(-50%, -50%) rotate(-45deg);
+              font-size: 80px;
+              font-weight: 800;
+              color: rgba(245, 158, 11, 0.07);
+              z-index: 9999;
+              pointer-events: none;
+              white-space: nowrap;
+              text-transform: uppercase;
+              letter-spacing: 0.12em;
+              font-family: 'Inter', sans-serif;
+              display: block !important;
+            }
+            
+            .footer-info {
+              margin-top: 25px;
+              font-size: 9px;
+              color: #64748b;
+              display: flex;
+              justify-content: space-between;
+              border-top: 1px solid #e2e8f0;
+              padding-top: 10px;
+            }
+            
+            @media print {
+              body { 
+                padding: 0; 
+              }
+              @page { 
+                margin: 1cm; 
+                size: A4 landscape;
+              }
+              .control-table th {
+                background-color: #f8fafc !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div class="company-name">${companyProfile?.name || 'PCEPL Engineering'}</div>
+            <div class="logo-container">${logoUrl ? ` <img src="${logoUrl}" class="logo" />` : '<div style="font-size: 20px; font-weight: 800; color: #0f172a; letter-spacing: 0.5px;">ERP SYSTEM</div>'}</div>
+          </div>
+          
+          ${!isConfigured ? `<div class="watermark-draft">DRAFT PLAN</div>` : ''}
+
+          <h1 class="sheet-title">Design & Development Control Sheet</h1>
+
+          <div class="project-details-card">
+            <div class="project-details-card-title">Project & Plan Specifications</div>
+            <div class="project-details-grid">
+              <div class="project-details-item">
+                <span class="project-details-label">Project ID (PID)</span>
+                <span class="project-details-value" style="font-family: monospace;">${project.pid}</span>
+              </div>
+              <div class="project-details-item">
+                <span class="project-details-label">Project Name</span>
+                <span class="project-details-value">${project.name}</span>
+              </div>
+              <div class="project-details-item">
+                <span class="project-details-label">Customer Name</span>
+                <span class="project-details-value">${project.customer_name}</span>
+              </div>
+              <div class="project-details-item">
+                <span class="project-details-label">Project Complexity</span>
+                <span class="project-details-value">${project.project_complexity || 'Medium'}</span>
+              </div>
+              <div class="project-details-item">
+                <span class="project-details-label">Planned Start Date</span>
+                <span class="project-details-value">${isConfigured ? formatDate(project.planned_start_date) : 'DRAFT (Not Activated)'}</span>
+              </div>
+              <div class="project-details-item">
+                <span class="project-details-label">Date Received</span>
+                <span class="project-details-value">${formatDate(project.date_received)}</span>
+              </div>
+              <div class="project-details-item">
+                <span class="project-details-label">Target Completion</span>
+                <span class="project-details-value">${cascadedStages.length > 0 ? formatDate(cascadedStages[cascadedStages.length - 1].planned_end_date) : '—'}</span>
+              </div>
+              <div class="project-details-item">
+                <span class="project-details-label">Plan Status</span>
+                <span class="project-details-value">${isConfigured ? 'Active sequential Timeline' : 'DRAFT PREVIEW'}</span>
+              </div>
+            </div>
+          </div>
+
+          <table class="control-table">
+            <thead>
+              <tr>
+                <th style="width: 4%; text-align: center;">Sr.</th>
+                <th style="width: 25%;">Activity Description</th>
+                <th style="width: 11%; text-align: center;">Planned Start</th>
+                <th style="width: 8%; text-align: center;">Duration</th>
+                <th style="width: 11%; text-align: center;">Planned End</th>
+                <th style="width: 12%; text-align: center;">Actual Completion</th>
+                <th style="width: 8%; text-align: center;">Delay</th>
+                <th style="width: 9%; text-align: center;">Status</th>
+                <th style="width: 12%;">Remarks / Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rowsHtml}
+            </tbody>
+          </table>
+
+          <div class="footer-info">
+            <span>Generated on: ${new Date().toLocaleString('en-IN')}</span>
+            <span>Plan Math: Sunday-bypassing sequential calendar cascade</span>
+          </div>
+
+          <script>
+            window.onload = () => {
+              window.print();
+              setTimeout(() => { window.close(); }, 500);
+            };
+          </script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
+
   const handleFormSubmit = async (data: any) => {
     if (!activeStage) return;
     setActionLoading(true);
@@ -1045,11 +1359,9 @@ export function ProjectDetailView({ id, role }: ProjectDetailViewProps) {
                       <span>🔄 Timeline cascades sequentially: <strong className="text-slate-700">Planned End = Start + Duration</strong>.</span>
                       <span>📆 Sundays are automatically skipped to match corporate scheduling guidelines.</span>
                     </div>
-                    {isConfigured && (
-                      <Button variant="outline" size="sm" onClick={handlePrintFullReport} className="text-slate-600 border-slate-200">
-                        <Printer className="h-4 w-4 mr-2" /> Print Control Sheet
-                      </Button>
-                    )}
+                    <Button variant="outline" size="sm" onClick={handlePrintControlSheet} className="text-slate-600 border-slate-200">
+                      <Printer className="h-4 w-4 mr-2" /> Print Control Sheet
+                    </Button>
                   </div>
                 </div>
               );
