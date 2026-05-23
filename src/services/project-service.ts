@@ -53,6 +53,7 @@ export interface ProjectFilters {
   status?: string;
   project_type?: string;
   ordering?: string;
+  in_processing?: string;
 }
 
 export interface PaginatedResponse<T> {

@@ -17,6 +17,7 @@ import {
   Layers,
   BookOpen,
   FileEdit,
+  FileText,
 } from 'lucide-react';
 import type { UserRole } from '@/types/auth';
 import { settingsService, CompanyProfile } from '@/services/settings-service';
@@ -45,6 +46,12 @@ const navItems: NavItem[] = [
     label: 'ECN',
     href: '/ecn',
     icon: <FileEdit size={20} />,
+    roles: ['ADMIN', 'SUPERVISOR', 'EMPLOYEE'],
+  },
+  {
+    label: 'Reports',
+    href: '/reports',
+    icon: <FileText size={20} />,
     roles: ['ADMIN', 'SUPERVISOR', 'EMPLOYEE'],
   },
   {
