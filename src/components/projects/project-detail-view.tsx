@@ -602,7 +602,7 @@ export function ProjectDetailView({ id, role }: ProjectDetailViewProps) {
     printWindow.document.write(`
       <html>
         <head>
-          <title>${companyProfile?.name || 'ERP'} - D&D Control Sheet</title>
+          <title>${companyProfile?.name || 'ERP'} - D&D Plan</title>
           <style>
             @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
             
@@ -802,7 +802,7 @@ export function ProjectDetailView({ id, role }: ProjectDetailViewProps) {
           
           ${!isConfigured ? `<div class="watermark-draft">DRAFT PLAN</div>` : ''}
 
-          <h1 class="sheet-title">Design & Development Control Sheet</h1>
+          <h1 class="sheet-title">Design & Development Plan</h1>
 
           <div class="project-details-card">
             <div class="project-details-card-title">Project & Plan Specifications</div>
@@ -1035,7 +1035,7 @@ export function ProjectDetailView({ id, role }: ProjectDetailViewProps) {
               : 'border-transparent text-slate-400 hover:text-slate-700'
           }`}
         >
-          📅 Design & Development Plan (D&D Control Sheet)
+          📅 Design & Development Plan
         </button>
       </div>
 
@@ -1242,7 +1242,7 @@ export function ProjectDetailView({ id, role }: ProjectDetailViewProps) {
           {/* D&D Spreadsheet Sheet Card */}
           <Card 
             title="Design & Development Plan Spreadsheet" 
-            subtitle={`Integrated Control Sheet • Project ID: ${project.pid} • Complexity: ${project.project_complexity || 'Medium'}`}
+            subtitle={`Integrated Plan • Project ID: ${project.pid} • Complexity: ${project.project_complexity || 'Medium'}`}
             className="overflow-hidden shadow-xl shadow-blue-500/5"
           >
             {(() => {
@@ -1360,7 +1360,7 @@ export function ProjectDetailView({ id, role }: ProjectDetailViewProps) {
                       <span>📆 Sundays are automatically skipped to match corporate scheduling guidelines.</span>
                     </div>
                     <Button variant="outline" size="sm" onClick={handlePrintControlSheet} className="text-slate-600 border-slate-200">
-                      <Printer className="h-4 w-4 mr-2" /> Print Control Sheet
+                      <Printer className="h-4 w-4 mr-2" /> Print Plan
                     </Button>
                   </div>
                 </div>
