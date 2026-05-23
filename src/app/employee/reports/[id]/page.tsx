@@ -1,4 +1,4 @@
-import { ReportProjectDetailView } from '@/components/reports/report-project-detail-view';
+import { ReportsListView } from '@/components/reports/reports-list-view';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -6,5 +6,5 @@ interface PageProps {
 
 export default async function EmployeeReportDetailPage({ params }: PageProps) {
   const { id } = await params;
-  return <ReportProjectDetailView id={id} role="employee" />;
+  return <ReportsListView role="employee" initialProjectId={id} />;
 }
