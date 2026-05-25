@@ -27,6 +27,7 @@ const projectSchema = z.object({
   inspection_authority: z.string().optional(),
   inspection_authority_fk: z.string().optional().nullable(),
   applicable_standard: z.string().optional(),
+  standard: z.string().optional().nullable(),
   date_received: z.string().min(1, 'Date received is required'),
   target_completion_date: z.string().optional().nullable(),
   status: z.enum(['Draft', 'Open', 'In Progress', 'Closed', 'Rejected', 'Pending Approval']).default('Open'),
@@ -54,8 +55,17 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({ initialData, role }) =
 
   // Standards dropdown state
   const [standards, setStandards] = useState<Standard[]>([]);
-  const [standardSearch, setStandardSearch] = useState(initialData?.applicable_standard || '');
+  const [standardSearch, setStandardSearch] = useState('');
   const [showStandardDropdown, setShowStandardDropdown] = useState(false);
+  const [selectedStandards, setSelectedStandards] = useState<string[]>(() => {
+    if (initialData?.applicable_standard) {
+      return initialData.applicable_standard
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean);
+    }
+    return [];
+  });
 
   // Inspection Authorities dropdown state
   const [authorities, setAuthorities] = useState<InspectionAuthority[]>([]);
@@ -176,6 +186,7 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({ initialData, role }) =
       inspection_authority: initialData?.inspection_authority || '',
       inspection_authority_fk: initialData?.inspection_authority_fk?.toString() || '',
       applicable_standard: initialData?.applicable_standard || '',
+      standard: initialData?.standard?.toString() || null,
       date_received: initialData?.date_received || new Date().toISOString().split('T')[0],
       target_completion_date: initialData?.target_completion_date || '',
       status: initialData?.status || 'Open',
@@ -518,11 +529,24 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({ initialData, role }) =
                 <label className="block text-sm font-medium text-slate-700 mb-1.5">Applicable Standard</label>
                 <div className="relative">
                   <Input
-                    placeholder="Type to search active standards..."
+                    placeholder="Search or type custom standard..."
                     value={standardSearch}
                     onChange={(e) => {
                       setStandardSearch(e.target.value);
-                      setValue('applicable_standard', e.target.value);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        const trimmed = standardSearch.trim();
+                        if (trimmed && !selectedStandards.includes(trimmed)) {
+                          const updated = [...selectedStandards, trimmed];
+                          setSelectedStandards(updated);
+                          setValue('applicable_standard', updated.join(', '));
+                          setValue('standard', null);
+                          setStandardSearch('');
+                          toast.success(`Added Custom Standard: ${trimmed}`);
+                        }
+                      }
                     }}
                     onFocus={() => setShowStandardDropdown(true)}
                     className={errors.applicable_standard ? 'border-rose-500' : ''}
@@ -530,41 +554,111 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({ initialData, role }) =
                 </div>
                 {errors.applicable_standard && <p className="text-xs text-rose-500 font-bold uppercase tracking-tighter mt-1">{errors.applicable_standard.message}</p>}
                 
-                {showStandardDropdown && filteredStandards.length > 0 && (
+                {showStandardDropdown && (
                   <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
                     <div className="p-2 bg-slate-50 border-b flex justify-between items-center">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Active Standards</span>
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Select Standard</span>
                       <button 
                         type="button" 
                         onClick={() => setShowStandardDropdown(false)} 
-                        className="text-[10px] text-blue-600 font-bold uppercase"
+                        className="text-[10px] text-blue-600 font-bold uppercase hover:text-blue-800 transition-colors"
                       >
                         Close
                       </button>
                     </div>
                     <div className="max-h-60 overflow-y-auto">
-                      {filteredStandards.map((std) => (
+                      {standardSearch.trim() && !filteredStandards.some(std => std.standard_number.toLowerCase() === standardSearch.trim().toLowerCase()) && (
                         <button
-                          key={std.id}
                           type="button"
-                          className="w-full px-4 py-3 text-left hover:bg-blue-50/50 transition-colors flex items-center justify-between border-b last:border-0 border-slate-100 group"
+                          className="w-full px-4 py-3 text-left hover:bg-blue-50/50 transition-colors flex items-center justify-between border-b border-slate-100 font-semibold text-blue-600 text-xs"
                           onClick={() => {
-                            setValue('applicable_standard', std.standard_number);
-                            setStandardSearch(std.standard_number);
+                            const trimmed = standardSearch.trim();
+                            if (!selectedStandards.includes(trimmed)) {
+                              const updated = [...selectedStandards, trimmed];
+                              setSelectedStandards(updated);
+                              setValue('applicable_standard', updated.join(', '));
+                              setValue('standard', null);
+                            }
+                            setStandardSearch('');
                             setShowStandardDropdown(false);
-                            toast.success(`Selected Standard: ${std.standard_number}`, { icon: '📜' });
+                            toast.success(`Added Custom Standard: ${trimmed}`);
                           }}
                         >
-                          <div>
-                            <span className="font-bold text-slate-900 block text-xs group-hover:text-blue-600 transition-colors">{std.standard_number}</span>
-                            <span className="text-[10px] text-slate-400 font-medium block mt-0.5 line-clamp-1">{std.standard_name}</span>
-                          </div>
-                          <span className="text-[9px] font-bold text-blue-600 bg-blue-50 border border-blue-100 px-1.5 py-0.5 rounded uppercase font-mono">
-                            {std.category}
-                          </span>
+                          <span>+ Add &quot;{standardSearch.trim()}&quot; as custom standard</span>
                         </button>
-                      ))}
+                      )}
+
+                      {filteredStandards.length > 0 ? (
+                        filteredStandards.map((std) => {
+                          const isAlreadySelected = selectedStandards.includes(std.standard_number);
+                          return (
+                            <button
+                              key={std.id}
+                              type="button"
+                              disabled={isAlreadySelected}
+                              className={`w-full px-4 py-3 text-left hover:bg-blue-50/50 transition-colors flex items-center justify-between border-b last:border-0 border-slate-100 group ${isAlreadySelected ? 'opacity-50 cursor-not-allowed bg-slate-50' : ''}`}
+                              onClick={() => {
+                                if (!selectedStandards.includes(std.standard_number)) {
+                                  const updated = [...selectedStandards, std.standard_number];
+                                  setSelectedStandards(updated);
+                                  setValue('applicable_standard', updated.join(', '));
+                                  setValue('standard', null);
+                                  toast.success(`Selected Standard: ${std.standard_number}`, { icon: '📜' });
+                                }
+                                setStandardSearch('');
+                                setShowStandardDropdown(false);
+                              }}
+                            >
+                              <div>
+                                <span className="font-bold text-slate-900 block text-xs group-hover:text-blue-600 transition-colors">{std.standard_number}</span>
+                                <span className="text-[10px] text-slate-400 font-medium block mt-0.5 line-clamp-1">{std.standard_name}</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                {isAlreadySelected && (
+                                  <span className="text-[8px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-250 px-1.5 py-0.5 rounded uppercase">
+                                    Selected
+                                  </span>
+                                )}
+                                <span className="text-[9px] font-bold text-blue-600 bg-blue-50 border border-blue-100 px-1.5 py-0.5 rounded uppercase font-mono">
+                                  {std.category}
+                                </span>
+                              </div>
+                            </button>
+                          );
+                        })
+                      ) : (
+                        !standardSearch.trim() && (
+                          <div className="p-4 text-center text-xs text-slate-400 italic">No matching standards found</div>
+                        )
+                      )}
                     </div>
+                  </div>
+                )}
+
+                {/* Selected Tags Display */}
+                {selectedStandards.length > 0 && (
+                  <div className="flex flex-wrap gap-2 pt-1.5">
+                    {selectedStandards.map((std, idx) => (
+                      <span 
+                        key={idx} 
+                        className="inline-flex items-center gap-1.5 pl-2.5 pr-1.5 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 animate-in zoom-in-95 duration-100 hover:bg-blue-100/55 transition-all"
+                      >
+                        {std}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const updated = selectedStandards.filter((_, i) => i !== idx);
+                            setSelectedStandards(updated);
+                            setValue('applicable_standard', updated.join(', '));
+                            setValue('standard', null);
+                            toast.success(`Removed: ${std}`, { icon: '🗑️' });
+                          }}
+                          className="text-blue-400 hover:text-blue-600 hover:bg-blue-200/50 transition-colors p-0.5 rounded-full flex items-center justify-center"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </span>
+                    ))}
                   </div>
                 )}
               </div>

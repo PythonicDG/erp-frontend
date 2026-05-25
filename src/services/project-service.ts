@@ -31,6 +31,7 @@ export interface Project {
   inspection_authority: string;
   inspection_authority_fk?: number | string | null;
   applicable_standard: string;
+  standard?: number | string | null;
   date_received: string;
   month_received: string;
   target_completion_date: string | null;
