@@ -170,6 +170,7 @@ export function ProjectBulkUploadModal({ isOpen, onClose, onSuccess }: ProjectBu
                     <li>Required fields: <strong>Project Name</strong>, <strong>Customer Name</strong>, <strong>Date Received</strong>.</li>
                     <li>Date columns must use a standard format (e.g. <code>YYYY-MM-DD</code> or <code>DD/MM/YYYY</code>).</li>
                     <li>If a Client doesn't exist in the database, it will be automatically created.</li>
+                    <li>Multiple Inspection Authorities are supported (comma-separated, e.g. <code>Internal QA, LRS</code>).</li>
                     <li>Assignee field will look up user by email address or full name.</li>
                   </ul>
                   <button 

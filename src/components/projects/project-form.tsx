@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Save, Send, ArrowLeft, Loader2 } from 'lucide-react';
+import { Save, Send, ArrowLeft, Loader2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
@@ -59,8 +59,17 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({ initialData, role }) =
 
   // Inspection Authorities dropdown state
   const [authorities, setAuthorities] = useState<InspectionAuthority[]>([]);
-  const [authoritySearch, setAuthoritySearch] = useState(initialData?.inspection_authority || '');
+  const [authoritySearch, setAuthoritySearch] = useState('');
   const [showAuthorityDropdown, setShowAuthorityDropdown] = useState(false);
+  const [selectedAuthorities, setSelectedAuthorities] = useState<string[]>(() => {
+    if (initialData?.inspection_authority) {
+      return initialData.inspection_authority
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean);
+    }
+    return [];
+  });
  
   useEffect(() => {
     const fetchTemplates = async () => {
@@ -372,12 +381,24 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({ initialData, role }) =
                 <label className="block text-sm font-medium text-slate-700 mb-1.5">Inspection Authority</label>
                 <div className="relative">
                   <Input
-                    placeholder="Type to search active authorities..."
+                    placeholder="Search or type custom authority..."
                     value={authoritySearch}
                     onChange={(e) => {
                       setAuthoritySearch(e.target.value);
-                      setValue('inspection_authority_fk', null);
-                      setValue('inspection_authority', e.target.value);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        const trimmed = authoritySearch.trim();
+                        if (trimmed && !selectedAuthorities.includes(trimmed)) {
+                          const updated = [...selectedAuthorities, trimmed];
+                          setSelectedAuthorities(updated);
+                          setValue('inspection_authority', updated.join(', '));
+                          setValue('inspection_authority_fk', null);
+                          setAuthoritySearch('');
+                          toast.success(`Added Custom Authority: ${trimmed}`);
+                        }
+                      }
                     }}
                     onFocus={() => setShowAuthorityDropdown(true)}
                     className={errors.inspection_authority_fk ? 'border-rose-500' : ''}
@@ -385,42 +406,111 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({ initialData, role }) =
                 </div>
                 {errors.inspection_authority_fk && <p className="text-xs text-rose-500 font-bold uppercase tracking-tighter mt-1">{errors.inspection_authority_fk.message}</p>}
                 
-                {showAuthorityDropdown && filteredAuthorities.length > 0 && (
+                {showAuthorityDropdown && (
                   <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
                     <div className="p-2 bg-slate-50 border-b flex justify-between items-center">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Active Authorities</span>
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Select Authority</span>
                       <button 
                         type="button" 
                         onClick={() => setShowAuthorityDropdown(false)} 
-                        className="text-[10px] text-blue-600 font-bold uppercase"
+                        className="text-[10px] text-blue-600 font-bold uppercase hover:text-blue-800 transition-colors"
                       >
                         Close
                       </button>
                     </div>
                     <div className="max-h-60 overflow-y-auto">
-                      {filteredAuthorities.map((auth) => (
+                      {authoritySearch.trim() && !filteredAuthorities.some(auth => auth.name.toLowerCase() === authoritySearch.trim().toLowerCase()) && (
                         <button
-                          key={auth.id}
                           type="button"
-                          className="w-full px-4 py-3 text-left hover:bg-blue-50/50 transition-colors flex items-center justify-between border-b last:border-0 border-slate-100 group"
+                          className="w-full px-4 py-3 text-left hover:bg-blue-50/50 transition-colors flex items-center justify-between border-b border-slate-100 font-semibold text-blue-600 text-xs"
                           onClick={() => {
-                            setValue('inspection_authority_fk', auth.id.toString());
-                            setValue('inspection_authority', auth.name);
-                            setAuthoritySearch(auth.name);
+                            const trimmed = authoritySearch.trim();
+                            if (!selectedAuthorities.includes(trimmed)) {
+                              const updated = [...selectedAuthorities, trimmed];
+                              setSelectedAuthorities(updated);
+                              setValue('inspection_authority', updated.join(', '));
+                              setValue('inspection_authority_fk', null);
+                            }
+                            setAuthoritySearch('');
                             setShowAuthorityDropdown(false);
-                            toast.success(`Selected Authority: ${auth.name}`, { icon: '🛡️' });
+                            toast.success(`Added Custom Authority: ${trimmed}`);
                           }}
                         >
-                          <div>
-                            <span className="font-bold text-slate-900 block text-xs group-hover:text-blue-600 transition-colors">{auth.name}</span>
-                            <span className="text-[10px] text-slate-400 font-medium block mt-0.5 font-mono">{auth.authority_id}</span>
-                          </div>
-                          <span className="text-[9px] font-bold text-blue-600 bg-blue-50 border border-blue-100 px-1.5 py-0.5 rounded uppercase">
-                            {auth.category}
-                          </span>
+                          <span>+ Add &quot;{authoritySearch.trim()}&quot; as custom authority</span>
                         </button>
-                      ))}
+                      )}
+
+                      {filteredAuthorities.length > 0 ? (
+                        filteredAuthorities.map((auth) => {
+                          const isAlreadySelected = selectedAuthorities.includes(auth.name);
+                          return (
+                            <button
+                              key={auth.id}
+                              type="button"
+                              disabled={isAlreadySelected}
+                              className={`w-full px-4 py-3 text-left hover:bg-blue-50/50 transition-colors flex items-center justify-between border-b last:border-0 border-slate-100 group ${isAlreadySelected ? 'opacity-50 cursor-not-allowed bg-slate-50' : ''}`}
+                              onClick={() => {
+                                if (!selectedAuthorities.includes(auth.name)) {
+                                  const updated = [...selectedAuthorities, auth.name];
+                                  setSelectedAuthorities(updated);
+                                  setValue('inspection_authority', updated.join(', '));
+                                  setValue('inspection_authority_fk', null);
+                                  toast.success(`Selected Authority: ${auth.name}`, { icon: '🛡️' });
+                                }
+                                setAuthoritySearch('');
+                                setShowAuthorityDropdown(false);
+                              }}
+                            >
+                              <div>
+                                <span className="font-bold text-slate-900 block text-xs group-hover:text-blue-600 transition-colors">{auth.name}</span>
+                                <span className="text-[10px] text-slate-400 font-medium block mt-0.5 font-mono">{auth.authority_id}</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                {isAlreadySelected && (
+                                  <span className="text-[8px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-250 px-1.5 py-0.5 rounded uppercase">
+                                    Selected
+                                  </span>
+                                )}
+                                <span className="text-[9px] font-bold text-blue-600 bg-blue-50 border border-blue-100 px-1.5 py-0.5 rounded uppercase">
+                                  {auth.category}
+                                </span>
+                              </div>
+                            </button>
+                          );
+                        })
+                      ) : (
+                        !authoritySearch.trim() && (
+                          <div className="p-4 text-center text-xs text-slate-400 italic">No matching authorities found</div>
+                        )
+                      )}
                     </div>
+                  </div>
+                )}
+
+                {/* Selected Tags Display */}
+                {selectedAuthorities.length > 0 && (
+                  <div className="flex flex-wrap gap-2 pt-1.5">
+                    {selectedAuthorities.map((auth, idx) => (
+                      <span 
+                        key={idx} 
+                        className="inline-flex items-center gap-1.5 pl-2.5 pr-1.5 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 animate-in zoom-in-95 duration-100 hover:bg-blue-100/55 transition-all"
+                      >
+                        {auth}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const updated = selectedAuthorities.filter((_, i) => i !== idx);
+                            setSelectedAuthorities(updated);
+                            setValue('inspection_authority', updated.join(', '));
+                            setValue('inspection_authority_fk', null);
+                            toast.success(`Removed: ${auth}`, { icon: '🗑️' });
+                          }}
+                          className="text-blue-400 hover:text-blue-600 hover:bg-blue-200/50 transition-colors p-0.5 rounded-full flex items-center justify-center"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </span>
+                    ))}
                   </div>
                 )}
               </div>
