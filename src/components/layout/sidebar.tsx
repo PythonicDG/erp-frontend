@@ -18,6 +18,7 @@ import {
   BookOpen,
   FileEdit,
   FileText,
+  ClipboardList,
 } from 'lucide-react';
 import type { UserRole } from '@/types/auth';
 import { settingsService, CompanyProfile } from '@/services/settings-service';
@@ -46,6 +47,12 @@ const navItems: NavItem[] = [
     label: 'ECN',
     href: '/ecn',
     icon: <FileEdit size={20} />,
+    roles: ['ADMIN', 'SUPERVISOR', 'EMPLOYEE'],
+  },
+  {
+    label: 'Customer Feedback Form',
+    href: '/feedback',
+    icon: <ClipboardList size={20} />,
     roles: ['ADMIN', 'SUPERVISOR', 'EMPLOYEE'],
   },
   {
