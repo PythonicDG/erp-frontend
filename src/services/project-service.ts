@@ -72,6 +72,11 @@ export const projectService = {
     return response.data;
   },
 
+  getMinimalList: async () => {
+    const response = await api.get<Array<Pick<Project, 'id' | 'pid' | 'name' | 'customer_name'>>>('/api/projects/minimal/');
+    return response.data;
+  },
+
   getById: async (id: number | string) => {
     const response = await api.get<Project>(`/api/projects/${id}/`);
     return response.data;
