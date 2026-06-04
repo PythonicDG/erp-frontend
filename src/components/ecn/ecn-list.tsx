@@ -1,12 +1,12 @@
 'use client';
 
 import React, { useState } from 'react';
-import { 
-  Plus, 
-  Trash2, 
-  FileText, 
-  Printer, 
-  Eye, 
+import {
+  Plus,
+  Trash2,
+  FileText,
+  Printer,
+  Eye,
   Search,
   Filter,
   Calendar,
@@ -34,19 +34,19 @@ export function ECNList({ role }: ECNListProps) {
   const router = useRouter();
   const { user } = useAuthStore();
   const isAdmin = role === 'admin' || user?.role === 'ADMIN';
-  
-  const { 
-    ecns, 
-    loading, 
-    totalCount, 
-    filters, 
+
+  const {
+    ecns,
+    loading,
+    totalCount,
+    filters,
     updateFilters,
     refresh
   } = useECNs();
 
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [ecnToDelete, setEcnToDelete] = useState<ECN | null>(null);
-  
+
   // Local filter states for the custom dropdown
   const [localFilters, setLocalFilters] = useState({
     status: '',
@@ -126,12 +126,12 @@ export function ECNList({ role }: ECNListProps) {
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Engineering Change Requests (ECN)</h1>
+          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Engineering Change Note (ECN)</h1>
           <p className="text-slate-500 mt-1">
             Initiate, track, and approve Engineering Change Notifications across all active projects.
           </p>
         </div>
-        <Button 
+        <Button
           className="shadow-blue-500/20 shadow-lg bg-blue-600 hover:bg-blue-700 text-white font-medium self-start md:self-auto"
           onClick={handleCreateNew}
         >
@@ -214,10 +214,10 @@ export function ECNList({ role }: ECNListProps) {
             <div className="space-y-3">
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Status</label>
-                <select 
+                <select
                   className="w-full h-9 px-3 rounded-lg border border-slate-200 bg-slate-50 text-sm focus:ring-2 focus:ring-blue-500/20 outline-hidden transition-all"
                   value={localFilters.status}
-                  onChange={(e) => setLocalFilters({...localFilters, status: e.target.value})}
+                  onChange={(e) => setLocalFilters({ ...localFilters, status: e.target.value })}
                 >
                   <option value="">All Statuses</option>
                   <option value="Draft">Draft</option>
@@ -234,7 +234,7 @@ export function ECNList({ role }: ECNListProps) {
                   placeholder="Filter by Project Name"
                   className="h-9 text-sm"
                   value={localFilters.project_name}
-                  onChange={(e) => setLocalFilters({...localFilters, project_name: e.target.value})}
+                  onChange={(e) => setLocalFilters({ ...localFilters, project_name: e.target.value })}
                 />
               </div>
 
@@ -244,7 +244,7 @@ export function ECNList({ role }: ECNListProps) {
                   placeholder="Filter by Customer Name"
                   className="h-9 text-sm"
                   value={localFilters.customer_name}
-                  onChange={(e) => setLocalFilters({...localFilters, customer_name: e.target.value})}
+                  onChange={(e) => setLocalFilters({ ...localFilters, customer_name: e.target.value })}
                 />
               </div>
 
@@ -254,7 +254,7 @@ export function ECNList({ role }: ECNListProps) {
                   type="date"
                   className="h-9 text-sm"
                   value={localFilters.date}
-                  onChange={(e) => setLocalFilters({...localFilters, date: e.target.value})}
+                  onChange={(e) => setLocalFilters({ ...localFilters, date: e.target.value })}
                 />
               </div>
             </div>
@@ -267,9 +267,9 @@ export function ECNList({ role }: ECNListProps) {
         }
         actions={(e) => (
           <div className="flex items-center justify-end gap-2">
-            <Button 
-              variant="ghost" 
-              size="icon" 
+            <Button
+              variant="ghost"
+              size="icon"
               className="h-8 w-8 text-slate-400 hover:text-blue-600 opacity-0 group-hover:opacity-100 transition-all"
               onClick={(evt) => {
                 evt.stopPropagation();
@@ -279,9 +279,9 @@ export function ECNList({ role }: ECNListProps) {
             >
               <Eye className="h-4 w-4" />
             </Button>
-            <Button 
-              variant="ghost" 
-              size="icon" 
+            <Button
+              variant="ghost"
+              size="icon"
               className="h-8 w-8 text-slate-400 hover:text-blue-600 opacity-0 group-hover:opacity-100 transition-all"
               onClick={(evt) => {
                 evt.stopPropagation();
@@ -292,9 +292,9 @@ export function ECNList({ role }: ECNListProps) {
               <Printer className="h-4 w-4" />
             </Button>
             {isAdmin && (
-              <Button 
-                variant="ghost" 
-                size="icon" 
+              <Button
+                variant="ghost"
+                size="icon"
                 className="h-8 w-8 text-slate-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-all"
                 onClick={(evt) => handleDeleteClick(evt, e)}
                 title="Delete ECN"
@@ -311,9 +311,9 @@ export function ECNList({ role }: ECNListProps) {
             </div>
             <h3 className="text-lg font-semibold text-slate-900 mb-1">No ECNs found</h3>
             <p className="text-slate-500 max-w-sm mx-auto text-sm mb-6">
-              Create engineering change requests to raise, track, and get approvals for drawings or product modifications.
+              Create engineering change note to raise, track, and get approvals for drawings or product modifications.
             </p>
-            <Button 
+            <Button
               onClick={handleCreateNew}
               className="bg-blue-600 hover:bg-blue-700 text-white font-medium"
             >
@@ -324,11 +324,11 @@ export function ECNList({ role }: ECNListProps) {
         }
       />
 
-      <ConfirmationModal 
+      <ConfirmationModal
         isOpen={deleteConfirmOpen}
         onClose={() => setDeleteConfirmOpen(false)}
         onConfirm={confirmDelete}
-        title="Delete Engineering Change Request?"
+        title="Delete Engineering Note?"
         message={`Are you sure you want to permanently delete ECN ${ecnToDelete?.ecn_number || 'Draft'}? This action cannot be undone and all change records will be lost.`}
         confirmLabel="Delete ECN"
         variant="danger"
