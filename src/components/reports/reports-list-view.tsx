@@ -17,6 +17,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { DataTable } from '@/components/ui/data-table';
 import { Project, projectService } from '@/services/project-service';
 import { workflowService, StageInstance } from '@/services/workflow-service';
@@ -58,6 +59,10 @@ export function ReportsListView({ role, initialProjectId }: ReportsListViewProps
   const [activeTab, setActiveTab] = useState<'forms' | 'documents' | 'plan'>('forms');
   const [viewingStage, setViewingStage] = useState<StageInstance | null>(null);
 
+  // Search states for searchable dropdown
+  const [searchQuery, setSearchQuery] = useState('');
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+
   // Fetch all projects that are currently in processing (at least one form is filled) for the dropdown selection list
   const { 
     projects, 
@@ -70,6 +75,15 @@ export function ReportsListView({ role, initialProjectId }: ReportsListViewProps
       .then(data => setCompanyProfile(data))
       .catch(() => null);
   }, []);
+
+  // Sync search query with selected project
+  useEffect(() => {
+    if (project) {
+      setSearchQuery(`${project.pid} - ${project.name} (${project.customer_name})`);
+    } else {
+      setSearchQuery('');
+    }
+  }, [project]);
 
   // Fetch specific project detail reports when selection changes
   const fetchProjectDetails = async (projectId: string) => {
@@ -954,9 +968,16 @@ export function ReportsListView({ role, initialProjectId }: ReportsListViewProps
         </p>
       </div>
 
-      {/* Dropdown Selector Card */}
-      <Card className="p-6 bg-white border-slate-200 shadow-sm rounded-2xl">
-        <div className="max-w-xl mx-auto space-y-2">
+      {dropdownOpen && (
+        <div 
+          className="fixed inset-0 z-40" 
+          onClick={() => setDropdownOpen(false)}
+        />
+      )}
+
+      {/* Searchable Project Selector Card */}
+      <Card className="p-6 bg-white border border-slate-200/80 rounded-2xl relative overflow-visible shadow-sm">
+        <div className="max-w-xl mx-auto space-y-2 relative z-50">
           <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest text-center md:text-left">
             Choose Project
           </label>
@@ -966,21 +987,59 @@ export function ReportsListView({ role, initialProjectId }: ReportsListViewProps
             </div>
           ) : (
             <div className="relative">
-              <select
-                value={selectedProjectId}
-                onChange={(e) => handleProjectChange(e.target.value)}
-                className="w-full h-12 pl-4 pr-10 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-hidden transition-all font-semibold text-slate-700 cursor-pointer appearance-none shadow-2xs"
-              >
-                <option value="">-- Choose an in-processing project --</option>
-                {projects.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.pid} - {p.name} ({p.customer_name})
-                  </option>
-                ))}
-              </select>
-              <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 font-bold text-xs select-none">
-                ▼
-              </div>
+              <Input
+                type="text"
+                placeholder="Search project by PID, Name, or Customer Name..."
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setDropdownOpen(true);
+                  if (e.target.value.trim() === '') {
+                    handleProjectChange('');
+                  }
+                }}
+                onFocus={() => setDropdownOpen(true)}
+                className="w-full h-12 px-3 rounded-xl border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-blue-500/20 outline-hidden transition-all font-semibold"
+              />
+              
+              {/* Autocomplete Dropdown list */}
+              {dropdownOpen && searchQuery.trim() !== '' && (
+                <div className="absolute z-50 left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-60 overflow-y-auto">
+                  {projects
+                    .filter(p => {
+                      const q = searchQuery.toLowerCase();
+                      return (
+                        p.pid?.toLowerCase().includes(q) ||
+                        p.name?.toLowerCase().includes(q) ||
+                        p.customer_name?.toLowerCase().includes(q)
+                      );
+                    })
+                    .map(projectOption => (
+                      <div
+                        key={projectOption.id}
+                        className="px-4 py-2.5 hover:bg-slate-50 cursor-pointer text-sm transition-colors border-b border-slate-100 last:border-0"
+                        onClick={() => {
+                          handleProjectChange(projectOption.id.toString());
+                          setSearchQuery(`${projectOption.pid} - ${projectOption.name} (${projectOption.customer_name})`);
+                          setDropdownOpen(false);
+                        }}
+                      >
+                        <div className="font-semibold text-slate-800">{projectOption.pid} - {projectOption.name}</div>
+                        <div className="text-xs text-slate-500">{projectOption.customer_name}</div>
+                      </div>
+                    ))}
+                  {projects.filter(p => {
+                    const q = searchQuery.toLowerCase();
+                    return (
+                      p.pid?.toLowerCase().includes(q) ||
+                      p.name?.toLowerCase().includes(q) ||
+                      p.customer_name?.toLowerCase().includes(q)
+                    );
+                  }).length === 0 && (
+                    <div className="px-4 py-3 text-sm text-slate-500 text-center">No projects match your search</div>
+                  )}
+                </div>
+              )}
             </div>
           )}
           {projects.length === 0 && !loadingProjects && (
