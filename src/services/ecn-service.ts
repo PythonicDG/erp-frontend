@@ -50,6 +50,7 @@ export interface ECN {
   approved_by: number | null;
   approved_by_name: string;
   status: ECNStatus;
+  attachments?: Array<{ name: string; type: string; base64: string }>;
   created_at: string;
   updated_at: string;
 }

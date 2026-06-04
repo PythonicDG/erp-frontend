@@ -15,7 +15,10 @@ import {
   AlertTriangle,
   UserCheck,
   CheckCircle,
-  FileEdit
+  FileEdit,
+  Paperclip,
+  X,
+  File
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '@/store/auth-store';
@@ -67,6 +70,7 @@ export function ECNForm({ id, role }: ECNFormProps) {
     reviewed_by: number | '';
     approved_by: number | '';
     status: ECNStatus;
+    attachments: Array<{ name: string; type: string; base64: string }>;
   }>({
     project: '',
     customer_name: '',
@@ -94,7 +98,8 @@ export function ECNForm({ id, role }: ECNFormProps) {
     initiator: '',
     reviewed_by: '',
     approved_by: '',
-    status: 'Draft'
+    status: 'Draft',
+    attachments: []
   });
 
   // Load Projects and Team Members
@@ -147,7 +152,8 @@ export function ECNForm({ id, role }: ECNFormProps) {
             initiator: ecn.initiator || '',
             reviewed_by: ecn.reviewed_by || '',
             approved_by: ecn.approved_by || '',
-            status: ecn.status || 'Draft'
+            status: ecn.status || 'Draft',
+            attachments: ecn.attachments || []
           });
         } else if (user) {
           // New ECN Mode - set default initiator to logged-in user
@@ -322,6 +328,38 @@ export function ECNForm({ id, role }: ECNFormProps) {
         action_plan: prev.action_plan.filter((_, i) => i !== index)
       };
     });
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const filesArray = Array.from(e.target.files);
+      filesArray.forEach(file => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const base64String = reader.result as string;
+          setFormData(prev => ({
+            ...prev,
+            attachments: [
+              ...prev.attachments,
+              {
+                name: file.name,
+                type: file.type,
+                base64: base64String
+              }
+            ]
+          }));
+        };
+        reader.readAsDataURL(file);
+      });
+      e.target.value = '';
+    }
+  };
+
+  const removeAttachment = (indexToRemove: number) => {
+    setFormData(prev => ({
+      ...prev,
+      attachments: prev.attachments.filter((_, index) => index !== indexToRemove)
+    }));
   };
 
   // Form Validation & Submission
@@ -859,6 +897,60 @@ export function ECNForm({ id, role }: ECNFormProps) {
             <Plus className="h-3 w-3 mr-1.5" />
             Add Action Row
           </Button>
+        </div>
+      </Card>
+
+      {/* SECTION 5: File Attachments */}
+      <Card 
+        title="Section 5: File Attachments" 
+        subtitle="Upload drawings, photos, PDFs, or other relevant files (Multiple files allowed)."
+      >
+        <div className="space-y-4">
+          <div className="flex items-center justify-center w-full">
+            <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-slate-200 rounded-lg cursor-pointer bg-slate-50/50 hover:bg-slate-50 transition-colors">
+              <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                <Paperclip className="w-8 h-8 text-slate-400 mb-2" />
+                <p className="mb-1 text-sm text-slate-600 font-semibold">Click to upload files</p>
+                <p className="text-xs text-slate-400">PDF, PNG, JPG, DOC up to 10MB</p>
+              </div>
+              <input 
+                type="file" 
+                multiple 
+                className="hidden" 
+                onChange={handleFileChange}
+              />
+            </label>
+          </div>
+
+          {formData.attachments && formData.attachments.length > 0 && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+              {formData.attachments.map((file, index) => (
+                <div 
+                  key={index} 
+                  className="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-lg shadow-sm hover:border-slate-300 transition-all"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="p-2 bg-blue-50 text-blue-600 rounded-md">
+                      <File className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-slate-700 truncate">{file.name}</p>
+                      <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">{file.type.split('/')[1] || file.type || 'File'}</p>
+                    </div>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-slate-400 hover:text-red-600 transition-colors hover:bg-red-50/50 rounded-full"
+                    onClick={() => removeAttachment(index)}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </Card>
 

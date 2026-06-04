@@ -14,7 +14,10 @@ import {
   AlertTriangle,
   UserCheck,
   CheckCircle,
-  FileText
+  FileText,
+  Paperclip,
+  Download,
+  File
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '@/store/auth-store';
@@ -454,6 +457,20 @@ export function ECNDetail({ id, role }: ECNDetailProps) {
     router.push(`/${role}/ecn/${id}/edit`);
   };
 
+  const downloadAttachment = (file: { name: string; type: string; base64: string }) => {
+    try {
+      const link = document.createElement('a');
+      link.href = file.base64;
+      link.download = file.name;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast.success(`Downloading ${file.name}...`);
+    } catch (err) {
+      toast.error('Failed to download attachment');
+    }
+  };
+
   // Status Workflow Handlers
   const handleWorkflowAction = async (nextStatus: ECNStatus) => {
     if (!ecn) return;
@@ -866,8 +883,44 @@ export function ECNDetail({ id, role }: ECNDetailProps) {
         </div>
       </Card>
 
-      {/* SECTION 5: Approvals */}
-      <Card title="Section 5: Approvals Routing" className="card print-hide">
+      {/* SECTION 5: File Attachments */}
+      <Card title="Section 5: File Attachments" className="card print-hide">
+        {ecn.attachments && ecn.attachments.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {ecn.attachments.map((file, index) => (
+              <div 
+                key={index} 
+                className="flex items-center justify-between p-3 bg-slate-50/50 border border-slate-200 rounded-xl hover:border-slate-300 hover:bg-slate-50 transition-all"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="p-2 bg-blue-50 text-blue-600 rounded-md">
+                    <File className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-slate-700 truncate">{file.name}</p>
+                    <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">{file.type.split('/')[1] || file.type || 'File'}</p>
+                  </div>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-slate-400 hover:text-blue-600 transition-colors rounded-full"
+                  onClick={() => downloadAttachment(file)}
+                  title="Download File"
+                >
+                  <Download className="w-4 h-4" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-slate-400 text-center py-4">No attachments uploaded for this ECN.</p>
+        )}
+      </Card>
+
+      {/* SECTION 6: Approvals */}
+      <Card title="Section 6: Approvals Routing" className="card print-hide">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
           {/* Initiated */}
           <div className="p-4 bg-slate-50/50 border border-slate-100 rounded-xl space-y-1">
