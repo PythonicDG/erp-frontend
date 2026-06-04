@@ -227,7 +227,7 @@ export function AuditLogs() {
                      <React.Fragment key={p}>
                        {showEllipsis && <span className="px-1.5 text-xs text-slate-400">...</span>}
                        <Button
-                         variant={p === page ? "default" : "outline"}
+                         variant={p === page ? "primary" : "outline"}
                          size="sm"
                          onClick={() => setPage(p)}
                          className={`h-8 w-8 text-xs font-bold ${
