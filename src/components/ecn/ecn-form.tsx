@@ -745,64 +745,7 @@ export function ECNForm({ id, role }: ECNFormProps) {
         </div>
       </Card>
 
-      {/* SECTION 5: Approvals */}
-      <Card 
-        title="Section 5: Approvals Routing" 
-        subtitle="Specify team members responsible for peer-initiator, review, and final approvals."
-      >
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Initiator */}
-          <div className="space-y-2">
-            <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block">Initiator</label>
-            <select
-              className="w-full h-10 px-3 rounded-lg border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-blue-500/20 outline-hidden transition-all focus:border-blue-500"
-              value={formData.initiator}
-              onChange={(e) => setFormData({ ...formData, initiator: e.target.value ? Number(e.target.value) : '' })}
-            >
-              <option value="">-- Select Initiating User --</option>
-              {teamMembers.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.full_name} ({m.role})
-                </option>
-              ))}
-            </select>
-          </div>
 
-          {/* Reviewed By */}
-          <div className="space-y-2">
-            <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block">Reviewed By</label>
-            <select
-              className="w-full h-10 px-3 rounded-lg border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-blue-500/20 outline-hidden transition-all focus:border-blue-500"
-              value={formData.reviewed_by}
-              onChange={(e) => setFormData({ ...formData, reviewed_by: e.target.value ? Number(e.target.value) : '' })}
-            >
-              <option value="">-- Select Reviewer User --</option>
-              {teamMembers.filter(m => m.role === 'SUPERVISOR' || m.role === 'ADMIN').map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.full_name} ({m.role})
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Approved By */}
-          <div className="space-y-2">
-            <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block">Approved By</label>
-            <select
-              className="w-full h-10 px-3 rounded-lg border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-blue-500/20 outline-hidden transition-all focus:border-blue-500 font-medium text-slate-700"
-              value={formData.approved_by}
-              onChange={(e) => setFormData({ ...formData, approved_by: e.target.value ? Number(e.target.value) : '' })}
-            >
-              <option value="">-- Select Approver User --</option>
-              {teamMembers.filter(m => m.role === 'ADMIN').map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.full_name} ({m.role})
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-      </Card>
 
       {/* Bottom Submit Toolbar */}
       <div className="flex items-center justify-end gap-3 border-t border-slate-200 pt-6">

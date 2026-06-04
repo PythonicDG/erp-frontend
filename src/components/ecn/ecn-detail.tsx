@@ -415,24 +415,12 @@ export function ECNDetail({ id, role }: ECNDetailProps) {
             <div style="border-top: 2px solid #000000; margin-bottom: 25px; padding-top: 15px;">
               <h3 style="font-size: 11px; font-weight: 700; color: #0f172a; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 20px;">Approvals & Signatures</h3>
             </div>
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
               <div style="border: 1px solid #cbd5e1; border-radius: 8px; padding: 15px; background-color: #f8fafc; display: flex; flex-direction: column; justify-content: space-between; min-height: 115px; box-sizing: border-box;">
                 <span style="font-size: 9px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.05em; display: block;">INITIATED BY</span>
                 <div style="margin-top: 15px; text-align: center;">
                   <div style="font-size: 12px; font-weight: 700; color: #0f172a;">${ecn.initiator_name || 'Not Set'}</div>
                   <div style="font-size: 9px; color: #64748b; margin-top: 2px;">Form Submitter</div>
-                </div>
-              </div>
-              <div style="border: 1px solid #cbd5e1; border-radius: 8px; padding: 15px; background-color: #f8fafc; display: flex; flex-direction: column; justify-content: space-between; min-height: 115px; box-sizing: border-box;">
-                <span style="font-size: 9px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.05em; display: block;">REVIEWED BY</span>
-                <div style="margin-top: 15px; text-align: center;">
-                  ${ecn.reviewed_by_name ? `
-                    <div style="font-size: 12px; font-weight: 700; color: #0f172a;">${ecn.reviewed_by_name}</div>
-                    <div style="font-size: 9px; color: #059669; font-weight: 700; margin-top: 2px;">Reviewed ✅</div>
-                  ` : `
-                    <div style="border-bottom: 1px dashed #94a3b8; width: 80%; margin: 15px auto 0 auto; min-height: 18px;"></div>
-                    <div style="font-size: 9px; color: #64748b; margin-top: 5px;">Supervisor Signature</div>
-                  `}
                 </div>
               </div>
               <div style="border: 1px solid #cbd5e1; border-radius: 8px; padding: 15px; background-color: #f8fafc; display: flex; flex-direction: column; justify-content: space-between; min-height: 115px; box-sizing: border-box;">
@@ -667,29 +655,8 @@ export function ECNDetail({ id, role }: ECNDetailProps) {
                 </Button>
               )}
 
-              {/* Submitted state -> Review */}
-              {ecn.status === 'Submitted' && isSupervisor && (
-                <div className="flex gap-2">
-                  <Button
-                    className="bg-amber-600 hover:bg-amber-700 text-white font-medium h-9 text-xs"
-                    onClick={() => handleWorkflowAction('Reviewed')}
-                  >
-                    <UserCheck className="h-3.5 w-3.5 mr-2" />
-                    Mark as Reviewed
-                  </Button>
-                  <Button
-                    variant="danger"
-                    className="h-9 text-xs"
-                    onClick={() => handleWorkflowAction('Rejected')}
-                  >
-                    <X className="h-3.5 w-3.5 mr-2" />
-                    Reject Change
-                  </Button>
-                </div>
-              )}
-
-              {/* Reviewed state -> Approve */}
-              {ecn.status === 'Reviewed' && isAdmin && (
+              {/* Submitted or Reviewed state -> Approve/Reject directly */}
+              {(ecn.status === 'Submitted' || ecn.status === 'Reviewed') && isAdmin && (
                 <div className="flex gap-2">
                   <Button
                     className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium h-9 text-xs shadow-md"
@@ -901,21 +868,12 @@ export function ECNDetail({ id, role }: ECNDetailProps) {
 
       {/* SECTION 5: Approvals */}
       <Card title="Section 5: Approvals Routing" className="card print-hide">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
           {/* Initiated */}
           <div className="p-4 bg-slate-50/50 border border-slate-100 rounded-xl space-y-1">
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Initiated By</span>
             <span className="font-semibold text-slate-800 block text-base">{ecn.initiator_name || 'Not Set'}</span>
             <span className="text-[10px] text-slate-400 block font-mono">Role: Initiator</span>
-          </div>
-
-          {/* Reviewed */}
-          <div className={`p-4 border rounded-xl space-y-1 ${ecn.reviewed_by_name ? 'bg-amber-50/20 border-amber-100' : 'bg-slate-50/50 border-slate-100'}`}>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Reviewed By</span>
-            <span className="font-semibold text-slate-800 block text-base">{ecn.reviewed_by_name || 'Pending Review'}</span>
-            <span className="text-[10px] text-slate-400 block font-mono">
-              Status: {ecn.reviewed_by_name ? 'Reviewed ✅' : 'Awaiting Peer Review ⏳'}
-            </span>
           </div>
 
           {/* Approved */}
@@ -932,28 +890,12 @@ export function ECNDetail({ id, role }: ECNDetailProps) {
       <div className="hidden print:block mt-12 page-break-inside-avoid">
         <div className="border-t border-slate-900 my-6 pt-6">
           <h3 className="text-xs font-bold text-slate-800 uppercase tracking-widest mb-4">Approvals & Signatures</h3>
-          <div className="grid grid-cols-3 gap-6">
+          <div className="grid grid-cols-2 gap-6">
             <div className="border border-slate-200 rounded-lg p-4 bg-slate-50/50 flex flex-col justify-between min-h-[110px]">
               <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">INITIATED BY</span>
               <div className="mt-6 text-center">
                 <div className="text-sm font-bold text-slate-900">{ecn.initiator_name || 'Not Set'}</div>
                 <div className="text-[10px] text-slate-400 mt-1">Form Submitter</div>
-              </div>
-            </div>
-            <div className="border border-slate-200 rounded-lg p-4 bg-slate-50/50 flex flex-col justify-between min-h-[110px]">
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">REVIEWED BY</span>
-              <div className="mt-6 text-center">
-                {ecn.reviewed_by_name ? (
-                  <>
-                    <div className="text-sm font-bold text-slate-900">{ecn.reviewed_by_name}</div>
-                    <div className="text-[10px] text-emerald-600 font-bold mt-1">Reviewed ✅</div>
-                  </>
-                ) : (
-                  <>
-                    <div className="border-b border-dashed border-slate-300 w-3/4 mx-auto min-h-[18px]"></div>
-                    <div className="text-[10px] text-slate-400 mt-2">Supervisor Signature</div>
-                  </>
-                )}
               </div>
             </div>
             <div className="border border-slate-200 rounded-lg p-4 bg-slate-50/50 flex flex-col justify-between min-h-[110px]">
