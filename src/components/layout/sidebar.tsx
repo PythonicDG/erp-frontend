@@ -19,6 +19,7 @@ import {
   FileEdit,
   FileText,
   ClipboardList,
+  Calculator,
 } from 'lucide-react';
 import type { UserRole } from '@/types/auth';
 import { settingsService, CompanyProfile } from '@/services/settings-service';
@@ -59,6 +60,12 @@ const navItems: NavItem[] = [
     label: 'Reports',
     href: '/reports',
     icon: <FileText size={20} />,
+    roles: ['ADMIN', 'SUPERVISOR', 'EMPLOYEE'],
+  },
+  {
+    label: 'Engineering Tools',
+    href: '/engineering-tools',
+    icon: <Calculator size={20} />,
     roles: ['ADMIN', 'SUPERVISOR', 'EMPLOYEE'],
   },
   {
