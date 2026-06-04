@@ -177,9 +177,46 @@ export function ECNForm({ id, role }: ECNFormProps) {
   };
 
   // Triggered when project is selected
-  const handleProjectChange = (projId: number) => {
+  const handleProjectChange = async (projId: number) => {
+    if (!projId) {
+      setFormData(prev => ({
+        ...prev,
+        project: '',
+        customer_name: '',
+        product_name: '',
+        customer_part_no: '',
+        pcepl_part_no: '',
+        applicable_standard: '',
+        inspection_authority: '',
+        old_revision_no: '',
+        new_revision: ''
+      }));
+      return;
+    }
+
     const selected = projects.find(p => p.id === projId);
     if (selected) {
+      // Calculate ECN revision sequences dynamically
+      let oldRev = '';
+      let newRev = 'Rev-01';
+
+      try {
+        const ecnData = await ecnService.getAll({ project: projId.toString(), page_size: 1000 } as any);
+        const projectEcns = ecnData.results || [];
+        // Exclude current ECN if in edit mode
+        const otherEcns = isEditMode && id ? projectEcns.filter(e => e.id !== Number(id)) : projectEcns;
+        // Count non-rejected ECNs
+        const activeEcns = otherEcns.filter(e => e.status !== 'Rejected');
+        const count = activeEcns.length;
+
+        if (count > 0) {
+          oldRev = `Rev-${String(count).padStart(2, '0')}`;
+          newRev = `Rev-${String(count + 1).padStart(2, '0')}`;
+        }
+      } catch (err) {
+        console.error('Failed to calculate ECN revision sequences', err);
+      }
+
       setFormData(prev => ({
         ...prev,
         project: projId,
@@ -188,9 +225,11 @@ export function ECNForm({ id, role }: ECNFormProps) {
         customer_part_no: selected.customer_part_no || 'N/A',
         pcepl_part_no: selected.pcepl_part_no || 'N/A',
         applicable_standard: selected.applicable_standard || 'N/A',
-        inspection_authority: selected.inspection_authority || 'N/A'
+        inspection_authority: selected.inspection_authority || 'N/A',
+        old_revision_no: oldRev,
+        new_revision: newRev
       }));
-      toast.success(`Loaded details for project: ${selected.name}`, { icon: '📂' });
+      toast.success(`Loaded details and revision history for project: ${selected.name}`, { icon: '📂' });
     }
   };
 
@@ -285,7 +324,7 @@ export function ECNForm({ id, role }: ECNFormProps) {
       toast.error('ECN Date is required');
       return;
     }
-    if (!formData.old_revision_no.trim()) {
+    if (formData.new_revision !== 'Rev-01' && !formData.old_revision_no.trim()) {
       toast.error('Old Revision Number is required');
       return;
     }
@@ -510,13 +549,14 @@ export function ECNForm({ id, role }: ECNFormProps) {
           {/* Old Revision No */}
           <div className="space-y-2">
             <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
-              Old Revision No. <span className="text-red-500">*</span>
+              Old Revision No. {formData.new_revision !== 'Rev-01' && <span className="text-red-500">*</span>}
             </label>
             <Input
               placeholder="e.g. Rev 01"
               value={formData.old_revision_no}
               onChange={(e) => setFormData({ ...formData, old_revision_no: e.target.value })}
-              className="h-10 rounded-lg"
+              className="h-10 rounded-lg bg-slate-50 text-slate-500 cursor-not-allowed"
+              disabled
             />
           </div>
 
@@ -540,7 +580,8 @@ export function ECNForm({ id, role }: ECNFormProps) {
               placeholder="e.g. Rev 02"
               value={formData.new_revision}
               onChange={(e) => setFormData({ ...formData, new_revision: e.target.value })}
-              className="h-10 rounded-lg"
+              className="h-10 rounded-lg bg-slate-50 text-slate-500 cursor-not-allowed"
+              disabled
             />
           </div>
         </div>
