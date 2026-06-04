@@ -193,7 +193,7 @@ export function ECNForm({ id, role }: ECNFormProps) {
   };
 
   // Triggered when project is selected
-  const handleProjectChange = async (projId: number) => {
+  const handleProjectChange = async (projId: number | '') => {
     if (!projId) {
       setFormData(prev => ({
         ...prev,
