@@ -215,6 +215,7 @@ export function ECNForm({ id, role }: ECNFormProps) {
       // Calculate ECN revision sequences dynamically
       let oldRev = '';
       let newRev = 'Rev-01';
+      let oldRevDate = '';
 
       try {
         const ecnData = await ecnService.getAll({ project: projId.toString(), page_size: 1000 } as any);
@@ -223,11 +224,13 @@ export function ECNForm({ id, role }: ECNFormProps) {
         const otherEcns = isEditMode && id ? projectEcns.filter(e => e.id !== Number(id)) : projectEcns;
         // Count non-rejected ECNs
         const activeEcns = otherEcns.filter(e => e.status !== 'Rejected');
-        const count = activeEcns.length;
+        const sortedActiveEcns = [...activeEcns].sort((a, b) => (b.id || 0) - (a.id || 0));
+        const count = sortedActiveEcns.length;
 
         if (count > 0) {
           oldRev = `Rev-${String(count).padStart(2, '0')}`;
           newRev = `Rev-${String(count + 1).padStart(2, '0')}`;
+          oldRevDate = sortedActiveEcns[0].ecn_date || '';
         }
       } catch (err) {
         console.error('Failed to calculate ECN revision sequences', err);
@@ -243,6 +246,7 @@ export function ECNForm({ id, role }: ECNFormProps) {
         applicable_standard: selected.applicable_standard || 'N/A',
         inspection_authority: selected.inspection_authority || 'N/A',
         old_revision_no: oldRev,
+        old_revision_date: oldRevDate,
         new_revision: newRev
       }));
       toast.success(`Loaded details and revision history for project: ${selected.name}`, { icon: '📂' });
@@ -638,7 +642,8 @@ export function ECNForm({ id, role }: ECNFormProps) {
               type="date"
               value={formData.old_revision_date}
               onChange={(e) => setFormData({ ...formData, old_revision_date: e.target.value })}
-              className="h-10 rounded-lg"
+              className="h-10 rounded-lg bg-slate-50 text-slate-500 cursor-not-allowed"
+              disabled
             />
           </div>
 
