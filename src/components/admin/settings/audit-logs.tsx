@@ -24,12 +24,31 @@ export function AuditLogs() {
   const [moduleFilter, setModuleFilter] = useState('all');
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
 
-  const fetchLogs = async () => {
+  const fetchLogs = async (currentPage = page, searchVal = search, moduleVal = moduleFilter) => {
     setLoading(true);
     try {
-      const data = await settingsService.getAuditLogs();
-      setLogs(Array.isArray(data) ? data : (data as any)?.results || []);
+      const params: any = {
+        page: currentPage,
+      };
+      if (searchVal.trim() !== '') {
+        params.search = searchVal;
+      }
+      if (moduleVal !== 'all') {
+        params.module = moduleVal;
+      }
+      
+      const data = await settingsService.getAuditLogs(params);
+      
+      if (Array.isArray(data)) {
+        setLogs(data);
+        setTotalCount(data.length);
+      } else {
+        setLogs((data as any).results || []);
+        setTotalCount((data as any).count || 0);
+      }
     } catch (error) {
       toast.error('Failed to load logs');
     } finally {
@@ -38,23 +57,18 @@ export function AuditLogs() {
   };
 
   useEffect(() => {
-    fetchLogs();
-  }, []);
+    fetchLogs(page, search, moduleFilter);
+  }, [page, search, moduleFilter]);
 
-  const filteredLogs = useMemo(() => {
-    return logs.filter(log => {
-      const searchLower = search.toLowerCase();
-      const matchesSearch = 
-        log.user_name?.toLowerCase().includes(searchLower) ||
-        log.action?.toLowerCase().includes(searchLower) ||
-        log.target?.toLowerCase().includes(searchLower) ||
-        log.module?.toLowerCase().includes(searchLower);
+  const handleSearchChange = (val: string) => {
+    setSearch(val);
+    setPage(1);
+  };
 
-      const matchesModule = moduleFilter === 'all' || log.module?.toLowerCase() === moduleFilter.toLowerCase();
-
-      return matchesSearch && matchesModule;
-    });
-  }, [logs, search, moduleFilter]);
+  const handleModuleChange = (val: string) => {
+    setModuleFilter(val);
+    setPage(1);
+  };
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -65,14 +79,14 @@ export function AuditLogs() {
             placeholder="Search logs by user, action or target..." 
             icon={<Search className="h-4 w-4" />}
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => handleSearchChange(e.target.value)}
           />
         </div>
         <div className="flex items-center gap-3 w-full lg:w-auto">
           <Button 
             variant="outline" 
             size="sm" 
-            onClick={fetchLogs} 
+            onClick={() => fetchLogs(page, search, moduleFilter)} 
             className="text-slate-500 hover:text-blue-600"
             loading={loading}
           >
@@ -82,7 +96,7 @@ export function AuditLogs() {
             <span className="text-xs font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">Module:</span>
             <select 
               value={moduleFilter}
-              onChange={(e) => setModuleFilter(e.target.value)}
+              onChange={(e) => handleModuleChange(e.target.value)}
               className="h-10 px-4 rounded-lg border border-slate-200 bg-slate-50/50 text-sm focus:ring-2 focus:ring-blue-500/20 outline-hidden transition-all font-medium min-w-[160px]"
             >
               <option value="all">All Modules</option>
@@ -92,7 +106,7 @@ export function AuditLogs() {
               <option value="team">Team</option>
             </select>
           </div>
-          <Button variant="ghost" size="sm" onClick={() => { setSearch(''); setModuleFilter('all'); }} className="text-slate-400 hover:text-blue-600">
+          <Button variant="ghost" size="sm" onClick={() => { setSearch(''); setModuleFilter('all'); setPage(1); }} className="text-slate-400 hover:text-blue-600">
             <FilterX className="h-4 w-4 mr-2" /> Reset
           </Button>
         </div>
@@ -118,7 +132,7 @@ export function AuditLogs() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {filteredLogs.map((log) => (
+                {logs.map((log) => (
                   <tr key={log.id} className="hover:bg-blue-50/30 transition-colors group">
                     <td className="px-8 py-4">
                       <div className="flex items-center gap-3">
@@ -170,13 +184,13 @@ export function AuditLogs() {
                     </td>
                   </tr>
                 ))}
-                {filteredLogs.length === 0 && !loading && (
+                {logs.length === 0 && !loading && (
                   <tr>
                     <td colSpan={5} className="px-8 py-32 text-center">
                       <div className="flex flex-col items-center gap-3 text-slate-400">
                         <Search className="h-12 w-12 opacity-20" />
                         <p className="text-sm font-medium italic">No audit logs match your current filters.</p>
-                        <Button variant="ghost" size="sm" onClick={() => { setSearch(''); setModuleFilter('all'); }} className="text-blue-600 hover:bg-blue-50">Clear all filters</Button>
+                        <Button variant="ghost" size="sm" onClick={() => { setSearch(''); setModuleFilter('all'); setPage(1); }} className="text-blue-600 hover:bg-blue-50">Clear all filters</Button>
                       </div>
                     </td>
                   </tr>
@@ -188,14 +202,56 @@ export function AuditLogs() {
       </Card>
       
       {/* Pagination Summary */}
-      {!loading && filteredLogs.length > 0 && (
+      {!loading && totalCount > 0 && (
         <div className="flex items-center justify-between px-2 text-slate-500">
           <p className="text-xs font-medium">
-            Showing <span className="font-bold text-slate-900">{filteredLogs.length}</span> entries
+            Showing <span className="font-bold text-slate-900">{logs.length}</span> of <span className="font-bold text-slate-900">{totalCount}</span> entries
           </p>
-          <div className="flex gap-2">
-             <Button variant="outline" size="sm" disabled className="text-xs h-8 border-slate-200">Previous</Button>
-             <Button variant="outline" size="sm" disabled className="text-xs h-8 border-slate-200">Next</Button>
+          <div className="flex items-center gap-2">
+             <Button 
+               variant="outline" 
+               size="sm" 
+               disabled={page === 1} 
+               onClick={() => setPage(p => Math.max(p - 1, 1))}
+               className="text-xs h-8 border-slate-200"
+             >
+               Previous
+             </Button>
+
+             <div className="flex items-center gap-1">
+               {Array.from({ length: Math.ceil(totalCount / 10) }, (_, i) => i + 1)
+                 .filter(p => p === 1 || p === Math.ceil(totalCount / 10) || Math.abs(p - page) <= 1)
+                 .map((p, idx, arr) => {
+                   const showEllipsis = idx > 0 && p - arr[idx - 1] > 1;
+                   return (
+                     <React.Fragment key={p}>
+                       {showEllipsis && <span className="px-1.5 text-xs text-slate-400">...</span>}
+                       <Button
+                         variant={p === page ? "default" : "outline"}
+                         size="sm"
+                         onClick={() => setPage(p)}
+                         className={`h-8 w-8 text-xs font-bold ${
+                           p === page 
+                             ? 'bg-blue-600 hover:bg-blue-700 text-white border-blue-600' 
+                             : 'text-slate-600 border-slate-200 hover:bg-slate-50'
+                         }`}
+                       >
+                         {p}
+                       </Button>
+                     </React.Fragment>
+                   );
+                 })}
+             </div>
+
+             <Button 
+               variant="outline" 
+               size="sm" 
+               disabled={page >= Math.ceil(totalCount / 10)} 
+               onClick={() => setPage(p => Math.min(p + 1, Math.ceil(totalCount / 10)))}
+               className="text-xs h-8 border-slate-200"
+             >
+               Next
+             </Button>
           </div>
         </div>
       )}
