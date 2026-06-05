@@ -3,18 +3,26 @@
 import React, { useState } from 'react';
 import { 
   Building2, 
-  History
+  History,
+  Database
 } from 'lucide-react';
 import { GeneralSettings } from '@/components/admin/settings/general-settings';
 import { AuditLogs } from '@/components/admin/settings/audit-logs';
-
-const tabs = [
-  { id: 'general', label: 'Company Profile', icon: Building2 },
-  { id: 'audit', label: 'Audit Logs', icon: History },
-];
+import { DatabaseSettings } from '@/components/admin/settings/database-settings';
+import { useAuthStore } from '@/store/auth-store';
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState('general');
+  const { user } = useAuthStore();
+
+  const tabs = [
+    { id: 'general', label: 'Company Profile', icon: Building2 },
+    { id: 'audit', label: 'Audit Logs', icon: History },
+  ];
+
+  if (user?.role === 'SUPERADMIN') {
+    tabs.push({ id: 'database', label: 'Database Management', icon: Database });
+  }
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-8">
@@ -52,6 +60,7 @@ export default function SettingsPage() {
       <div className="mt-8 transition-all duration-300">
         {activeTab === 'general' && <GeneralSettings />}
         {activeTab === 'audit' && <AuditLogs />}
+        {activeTab === 'database' && user?.role === 'SUPERADMIN' && <DatabaseSettings />}
       </div>
     </div>
   );

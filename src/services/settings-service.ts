@@ -52,5 +52,28 @@ export const settingsService = {
       },
     });
     return response.data;
+  },
+
+  backupDatabase: async () => {
+    const response = await api.get('/api/auth/database/backup/', {
+      responseType: 'blob',
+    });
+    return response.data;
+  },
+
+  restoreDatabase: async (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await api.post('/api/auth/database/restore/', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
+
+  resetDatabase: async () => {
+    const response = await api.post('/api/auth/database/reset/');
+    return response.data;
   }
 };
