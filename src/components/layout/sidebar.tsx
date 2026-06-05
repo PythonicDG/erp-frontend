@@ -52,6 +52,12 @@ const navItems: NavItem[] = [
     roles: ['ADMIN', 'SUPERVISOR', 'EMPLOYEE'],
   },
   {
+    label: 'ASCN',
+    href: '/ascn',
+    icon: <FileEdit size={20} />,
+    roles: ['ADMIN', 'SUPERVISOR', 'EMPLOYEE'],
+  },
+  {
     label: 'Customer Feedback Form',
     href: '/feedback',
     icon: <ClipboardList size={20} />,

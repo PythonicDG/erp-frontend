@@ -27,6 +27,7 @@ import { useProjects } from '@/hooks/use-projects';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { ecnService, ECN } from '@/services/ecn-service';
+import { ascnService, ASCN } from '@/services/ascn-service';
 
 const parseDateString = (str: string) => {
   const parts = str.split('-');
@@ -57,9 +58,10 @@ export function ReportsListView({ role, initialProjectId }: ReportsListViewProps
   const [stages, setStages] = useState<StageInstance[]>([]);
   const [companyProfile, setCompanyProfile] = useState<CompanyProfile | null>(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
-  const [activeTab, setActiveTab] = useState<'forms' | 'documents' | 'plan' | 'ecn'>('forms');
+  const [activeTab, setActiveTab] = useState<'forms' | 'documents' | 'plan' | 'ecn' | 'ascn'>('forms');
   const [viewingStage, setViewingStage] = useState<StageInstance | null>(null);
   const [ecns, setEcns] = useState<ECN[]>([]);
+  const [ascns, setAscns] = useState<ASCN[]>([]);
 
   // Search states for searchable dropdown
   const [searchQuery, setSearchQuery] = useState('');
@@ -93,22 +95,26 @@ export function ReportsListView({ role, initialProjectId }: ReportsListViewProps
       setProject(null);
       setStages([]);
       setEcns([]);
+      setAscns([]);
       return;
     }
     
     setLoadingDetails(true);
     try {
-      const [projectData, stagesData, ecnsData] = await Promise.all([
+      const [projectData, stagesData, ecnsData, ascnsData] = await Promise.all([
         projectService.getById(projectId),
         workflowService.getProjectStages(projectId),
-        ecnService.getAll({ project: projectId }).catch(() => ({ results: [] }))
+        ecnService.getAll({ project: projectId }).catch(() => ({ results: [] })),
+        ascnService.getAll({ project: projectId }).catch(() => ({ results: [] }))
       ]);
       const stagesList = Array.isArray(stagesData) ? stagesData : (stagesData as any)?.results || [];
       const ecnsList = Array.isArray(ecnsData) ? ecnsData : (ecnsData as any)?.results || [];
+      const ascnsList = Array.isArray(ascnsData) ? ascnsData : (ascnsData as any)?.results || [];
       
       setProject(projectData);
       setStages(stagesList);
       setEcns(ecnsList);
+      setAscns(ascnsList);
     } catch (error) {
       toast.error('Failed to load project report specifications');
     } finally {
@@ -1203,6 +1209,17 @@ export function ReportsListView({ role, initialProjectId }: ReportsListViewProps
             >
               🛠️ ECN ({ecns.length})
             </button>
+            <button
+              type="button"
+              onClick={() => { setActiveTab('ascn'); setViewingStage(null); }}
+              className={`pb-3 text-sm font-bold border-b-2 transition-all cursor-pointer flex items-center gap-2 ${
+                activeTab === 'ascn'
+                  ? 'border-blue-600 text-blue-600'
+                  : 'border-transparent text-slate-400 hover:text-slate-700'
+              }`}
+            >
+              💻 ASCN ({ascns.length})
+            </button>
           </div>
 
           {/* Sub Tab list contents */}
@@ -1418,6 +1435,87 @@ export function ReportsListView({ role, initialProjectId }: ReportsListViewProps
                 emptyState={
                   <div className="py-12 text-center text-slate-400 italic">
                     No Engineering Change Notes (ECN) found generated for this project.
+                  </div>
+                }
+              />
+            ) : activeTab === 'ascn' ? (
+              <DataTable 
+                data={ascns}
+                columns={[
+                  {
+                    header: "ASCN Number",
+                    cell: (e) => <span className="font-semibold text-blue-600 tracking-tight">{e.ascn_number || 'Draft'}</span>,
+                    sortable: true
+                  },
+                  {
+                    header: "ASCN Date",
+                    cell: (e) => e.ascn_date ? new Date(e.ascn_date).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : '-',
+                    sortable: true
+                  },
+                  {
+                    header: "Raised Dept.",
+                    accessorKey: "raised_department"
+                  },
+                  {
+                    header: "Initiated By",
+                    accessorKey: "change_initiated_by"
+                  },
+                  {
+                    header: "Status",
+                    cell: (e) => {
+                      const getStatusVariant = (status: string) => {
+                        switch (status) {
+                          case 'Draft': return 'default';
+                          case 'Submitted': return 'info';
+                          case 'Reviewed': return 'warning';
+                          case 'Approved': return 'success';
+                          case 'Rejected': return 'danger';
+                          default: return 'default';
+                        }
+                      };
+                      return (
+                        <Badge variant={getStatusVariant(e.status)}>
+                          {e.status}
+                        </Badge>
+                      );
+                    }
+                  }
+                ]}
+                 onRowClick={(e) => {
+                  router.push(`/${role}/ascn/${e.id}`);
+                }}
+                searchPlaceholder="Search ASCNs..."
+                actions={(e) => (
+                  <div className="flex items-center justify-end gap-1.5">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      title="View ASCN" 
+                      onClick={(evt) => { evt.stopPropagation(); router.push(`/${role}/ascn/${e.id}`); }} 
+                      className="h-8 w-8 text-slate-400 hover:text-blue-600"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                    <a 
+                      href={`/${role}/ascn/${e.id}?print=true`} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      onClick={(evt) => evt.stopPropagation()}
+                    >
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        title="Print ASCN" 
+                        className="h-8 w-8 text-slate-400 hover:text-blue-600"
+                      >
+                        <Printer className="h-4 w-4" />
+                      </Button>
+                    </a>
+                  </div>
+                )}
+                emptyState={
+                  <div className="py-12 text-center text-slate-400 italic">
+                    No Application Software Change Notes (ASCN) found generated for this project.
                   </div>
                 }
               />

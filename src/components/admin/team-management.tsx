@@ -201,6 +201,7 @@ export function TeamManagementView() {
 
 const OPTIONAL_TABS = [
   { key: 'ecn', label: 'ECN' },
+  { key: 'ascn', label: 'ASCN' },
   { key: 'feedback', label: 'Customer Feedback Form' },
   { key: 'reports', label: 'Reports' },
   { key: 'engineering-tools', label: 'Engineering Tools' },
