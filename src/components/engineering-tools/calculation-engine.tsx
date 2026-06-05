@@ -22,6 +22,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import toast from 'react-hot-toast';
 import { settingsService, CompanyProfile } from '@/services/settings-service';
+import { projectService } from '@/services/project-service';
 
 interface CalculationEngineProps {
   role: 'admin' | 'supervisor' | 'employee';
@@ -40,11 +41,17 @@ export function CalculationEngine({ role }: CalculationEngineProps) {
   const [companyProfile, setCompanyProfile] = useState<CompanyProfile | null>(null);
   const [projectRef, setProjectRef] = useState({ projectName: '', customerName: '', remarks: '' });
   const [hasCalculated, setHasCalculated] = useState(false);
+  const [projects, setProjects] = useState<any[]>([]);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
-  // Load company profile for print reports
+  // Load company profile and project list for print reports
   useEffect(() => {
     settingsService.getCompanyProfile()
       .then(data => setCompanyProfile(data))
+      .catch(() => null);
+    
+    projectService.getMinimalList()
+      .then(data => setProjects(data))
       .catch(() => null);
   }, []);
 
@@ -774,20 +781,73 @@ export function CalculationEngine({ role }: CalculationEngineProps) {
         </div>
       ) : (
         // Active Calculator Workspace Form (Top) and Output (Bottom) Layout
-        <div className="space-y-6">
+        <div className="space-y-6 relative">
+          {dropdownOpen && (
+            <div 
+              className="fixed inset-0 z-30" 
+              onClick={() => setDropdownOpen(false)}
+            />
+          )}
+
           {/* Project Reference Context Card */}
-          <Card className="p-6 bg-white border-slate-200/80 rounded-2xl shadow-xs">
+          <Card className="p-6 bg-white border-slate-200/80 rounded-2xl shadow-xs relative z-40 overflow-visible">
             <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Project Context Reference</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
+              <div className="relative">
                 <label className="text-[10px] font-bold text-slate-700 block mb-1">Project Name</label>
                 <Input 
                   type="text" 
-                  placeholder="e.g. Tata Power Main Panel" 
+                  placeholder="Search project by PID or Name..." 
                   value={projectRef.projectName} 
-                  onChange={e => setProjectRef({ ...projectRef, projectName: e.target.value })} 
+                  onChange={e => {
+                    setProjectRef({ ...projectRef, projectName: e.target.value });
+                    setDropdownOpen(true);
+                  }} 
+                  onFocus={() => setDropdownOpen(true)}
                   className="h-10 text-sm" 
                 />
+                
+                {/* Autocomplete Dropdown list */}
+                {dropdownOpen && projectRef.projectName.trim() !== '' && (
+                  <div className="absolute z-50 left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-60 overflow-y-auto">
+                    {projects
+                      .filter(p => {
+                        const q = projectRef.projectName.toLowerCase();
+                        return (
+                          p.pid?.toLowerCase().includes(q) ||
+                          p.name?.toLowerCase().includes(q) ||
+                          p.customer_name?.toLowerCase().includes(q)
+                        );
+                      })
+                      .map(project => (
+                        <div
+                          key={project.id}
+                          className="px-4 py-2.5 hover:bg-slate-50 cursor-pointer text-sm transition-colors border-b border-slate-100 last:border-0 text-left"
+                          onClick={() => {
+                            setProjectRef({
+                              projectName: `${project.pid} - ${project.name}`,
+                              customerName: project.customer_name || '',
+                              remarks: projectRef.remarks
+                            });
+                            setDropdownOpen(false);
+                          }}
+                        >
+                          <div className="font-semibold text-slate-800">{project.pid} - {project.name}</div>
+                          <div className="text-xs text-slate-500">{project.customer_name}</div>
+                        </div>
+                      ))}
+                    {projects.filter(p => {
+                      const q = projectRef.projectName.toLowerCase();
+                      return (
+                        p.pid?.toLowerCase().includes(q) ||
+                        p.name?.toLowerCase().includes(q) ||
+                        p.customer_name?.toLowerCase().includes(q)
+                      );
+                    }).length === 0 && (
+                      <div className="px-4 py-3 text-sm text-slate-500 text-center">No projects match your search</div>
+                    )}
+                  </div>
+                )}
               </div>
               <div>
                 <label className="text-[10px] font-bold text-slate-700 block mb-1">Customer Name</label>
