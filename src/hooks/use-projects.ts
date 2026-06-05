@@ -14,7 +14,6 @@ export const useProjects = (initialFilters: ProjectFilters = {}) => {
 
   const fetchProjects = useCallback(async () => {
     try {
-      setLoading(true);
       const response = await projectService.getAll(filters);
       setData(response);
       setError(null);
@@ -31,10 +30,14 @@ export const useProjects = (initialFilters: ProjectFilters = {}) => {
   }, [fetchProjects]);
 
   const updateFilters = (newFilters: Partial<ProjectFilters>) => {
+    setLoading(true);
     setFilters((prev) => ({ ...prev, ...newFilters, page: newFilters.page || 1 }));
   };
 
-  const refresh = () => fetchProjects();
+  const refresh = () => {
+    setLoading(true);
+    fetchProjects();
+  };
 
   return {
     projects: data?.results || [],

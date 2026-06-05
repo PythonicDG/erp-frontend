@@ -15,7 +15,6 @@ export const useECNs = (initialFilters: ECNFilters = {}) => {
 
   const fetchECNs = useCallback(async () => {
     try {
-      setLoading(true);
       const response = await ecnService.getAll(filters);
       setData(response);
       setError(null);
@@ -32,10 +31,14 @@ export const useECNs = (initialFilters: ECNFilters = {}) => {
   }, [fetchECNs]);
 
   const updateFilters = (newFilters: Partial<ECNFilters>) => {
+    setLoading(true);
     setFilters((prev) => ({ ...prev, ...newFilters, page: newFilters.page || 1 }));
   };
 
-  const refresh = () => fetchECNs();
+  const refresh = () => {
+    setLoading(true);
+    fetchECNs();
+  };
 
   return {
     ecns: data?.results || [],

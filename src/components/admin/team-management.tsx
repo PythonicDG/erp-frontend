@@ -171,10 +171,10 @@ export function TeamManagementView() {
         }
         actions={(m) => (
           <div className="flex justify-end gap-2">
-            <Button variant="ghost" size="icon" onClick={() => { setEditingMember(m); setIsModalOpen(true); }} className="text-slate-400 hover:text-blue-600">
+            <Button aria-label="Edit team member" variant="ghost" size="icon" onClick={() => { setEditingMember(m); setIsModalOpen(true); }} className="text-slate-400 hover:text-blue-600">
               <Edit2 className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="icon" onClick={() => handleDelete(m.id)} className="text-slate-400 hover:text-red-500">
+            <Button aria-label="Delete team member" variant="ghost" size="icon" onClick={() => handleDelete(m.id)} className="text-slate-400 hover:text-red-500">
               <Trash2 className="h-4 w-4" />
             </Button>
           </div>
@@ -255,7 +255,7 @@ function UserModal({ onClose, onSubmit, member }: any) {
             <h2 className="text-xl font-bold text-slate-900">{member ? 'Edit Team Member' : 'Add New Member'}</h2>
             <p className="text-xs text-slate-500 mt-0.5">{member ? `Modifying profile for ${member.employee_id}` : 'Create a new organizational user account'}</p>
           </div>
-          <Button variant="ghost" size="icon" onClick={onClose}><Trash2 className="h-5 w-5" /></Button>
+          <Button aria-label="Close modal" variant="ghost" size="icon" onClick={onClose}><Trash2 className="h-5 w-5" /></Button>
         </div>
         
         <form onSubmit={handleSubmit} className="p-8 space-y-6 overflow-y-auto flex-1">
