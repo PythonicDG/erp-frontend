@@ -11,6 +11,7 @@ export interface TeamMember {
   phone: string;
   department: string;
   role: 'ADMIN' | 'SUPERVISOR' | 'EMPLOYEE';
+  admin_code?: string;
   is_active: boolean;
   remarks?: string;
   password?: string;

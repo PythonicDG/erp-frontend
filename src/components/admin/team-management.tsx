@@ -133,7 +133,7 @@ export function TeamManagementView() {
                 'text-slate-600 border-slate-100 bg-slate-50'
               }`}>
                 {m.role === 'ADMIN' ? <Shield size={12} /> : m.role === 'SUPERVISOR' ? <UserCheck size={12} /> : <User size={12} />}
-                {m.role}
+                {m.role} {m.role === 'ADMIN' && m.admin_code ? `(${m.admin_code})` : ''}
               </Badge>
             )
           },
@@ -221,6 +221,7 @@ function UserModal({ onClose, onSubmit, member }: any) {
     username: member?.username || '',
     phone: member?.phone || '',
     role: member?.role || 'EMPLOYEE',
+    admin_code: member?.admin_code || '',
     department: member?.department || '',
     remarks: member?.remarks || '',
     password: '',
@@ -316,6 +317,18 @@ function UserModal({ onClose, onSubmit, member }: any) {
                  placeholder="e.g. Quality Assurance"
                />
             </div>
+
+            {formData.role === 'ADMIN' && (
+              <div className="space-y-1.5 col-span-2">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Admin Code</label>
+                <input 
+                  className="w-full h-10 px-3 rounded-lg border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-blue-500/20 outline-hidden transition-all"
+                  value={formData.admin_code}
+                  onChange={(e) => setFormData({...formData, admin_code: e.target.value})}
+                  placeholder="e.g. 1003 (Auto-generated if left blank)"
+                />
+              </div>
+            )}
           </div>
 
           <div className="space-y-1.5">

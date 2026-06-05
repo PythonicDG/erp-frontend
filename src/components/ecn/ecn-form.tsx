@@ -390,6 +390,10 @@ export function ECNForm({ id, role }: ECNFormProps) {
       toast.error('New Revision is required');
       return;
     }
+    if (submitStatus === 'Submitted' && !formData.approved_by) {
+      toast.error('Please select an Approved By administrator');
+      return;
+    }
     
     // Validate details of change (must have at least one filled row)
     const validDetails = formData.details_of_change.filter(r => r.description.trim() || r.reason.trim());
@@ -697,6 +701,28 @@ export function ECNForm({ id, role }: ECNFormProps) {
               className="h-10 rounded-lg bg-slate-50 text-slate-500 cursor-not-allowed"
               disabled
             />
+          </div>
+
+          {/* Approved By */}
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
+              Approved By <span className="text-red-500">*</span>
+            </label>
+            <select
+              className="w-full h-10 px-3 rounded-lg border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-blue-500/20 outline-hidden transition-all focus:border-blue-500 font-medium"
+              value={formData.approved_by}
+              onChange={(e) => setFormData({ ...formData, approved_by: e.target.value ? Number(e.target.value) : '' })}
+              required
+            >
+              <option value="">-- Select Admin --</option>
+              {teamMembers
+                .filter((m) => m.role === 'ADMIN' && m.is_active)
+                .map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.full_name} {m.admin_code ? `(${m.admin_code})` : ''}
+                  </option>
+                ))}
+            </select>
           </div>
         </div>
       </Card>

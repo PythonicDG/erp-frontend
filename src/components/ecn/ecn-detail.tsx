@@ -478,9 +478,7 @@ export function ECNDetail({ id, role }: ECNDetailProps) {
       setWorkflowLoading(true);
       const updated = await ecnService.update(id, { 
         status: nextStatus,
-        // Automatically map reviewer and approver user IDs on action
-        reviewed_by: nextStatus === 'Reviewed' ? user?.id : ecn.reviewed_by,
-        approved_by: nextStatus === 'Approved' ? user?.id : ecn.approved_by
+        reviewed_by: nextStatus === 'Reviewed' ? user?.id : ecn.reviewed_by
       });
       setEcn(updated);
       toast.success(`ECN status updated to ${nextStatus}!`, { icon: '🔄' });
@@ -673,7 +671,7 @@ export function ECNDetail({ id, role }: ECNDetailProps) {
               )}
 
               {/* Submitted or Reviewed state -> Approve/Reject directly */}
-              {(ecn.status === 'Submitted' || ecn.status === 'Reviewed') && isAdmin && (
+              {(ecn.status === 'Submitted' || ecn.status === 'Reviewed') && ecn.approved_by === user?.id && (
                 <div className="flex gap-2">
                   <Button
                     className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium h-9 text-xs shadow-md"
