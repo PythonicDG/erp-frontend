@@ -200,6 +200,7 @@ export function TeamManagementView() {
 }
 
 const OPTIONAL_TABS = [
+  { key: 'projects', label: 'Project Master' },
   { key: 'ecn', label: 'ECN' },
   { key: 'ascn', label: 'ASCN' },
   { key: 'feedback', label: 'Customer Feedback Form' },
@@ -226,7 +227,7 @@ function UserModal({ onClose, onSubmit, member }: any) {
     department: member?.department || '',
     remarks: member?.remarks || '',
     password: '',
-    allowed_tabs: member ? (member.allowed_tabs || []) : OPTIONAL_TABS.map(t => t.key)
+    allowed_tabs: member ? (member.allowed_tabs || []) : OPTIONAL_TABS.map(t => t.key).filter(k => k !== 'projects')
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -353,10 +354,6 @@ function UserModal({ onClose, onSubmit, member }: any) {
                <label className="flex items-center gap-2 text-xs font-semibold text-slate-400 cursor-not-allowed select-none">
                  <input type="checkbox" checked disabled className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
                  <span>Dashboard (Default)</span>
-               </label>
-               <label className="flex items-center gap-2 text-xs font-semibold text-slate-400 cursor-not-allowed select-none">
-                 <input type="checkbox" checked disabled className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
-                 <span>Project Master (Default)</span>
                </label>
                {OPTIONAL_TABS.map((tab) => {
                  const isChecked = formData.allowed_tabs.includes(tab.key);

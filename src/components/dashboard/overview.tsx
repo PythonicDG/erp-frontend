@@ -176,7 +176,7 @@ export function DashboardOverview() {
           icon={<Layers className="text-blue-600" />} 
           trend="+12%" 
           color="blue"
-          onClick={() => router.push(user ? `/${user.role.toLowerCase()}/projects` : '/projects')}
+          onClick={() => handleCardClick('projects', user ? `/${user.role.toLowerCase()}/projects` : '/projects')}
         />
         <StatCard 
           title="Open Projects" 
@@ -292,7 +292,7 @@ export function DashboardOverview() {
             </div>
             <button 
               className="text-xs font-bold text-blue-600 hover:underline px-4 py-2 bg-blue-50 rounded-lg"
-              onClick={() => router.push(user ? `/${user.role.toLowerCase()}/projects` : '/projects')}
+              onClick={() => handleCardClick('projects', user ? `/${user.role.toLowerCase()}/projects` : '/projects')}
             >
               View All Projects
             </button>

@@ -154,9 +154,9 @@ export function Sidebar({ userRole, isMobileOpen, onClose }: SidebarProps) {
     // 1. Check role permission
     if (!item.roles.includes(userRole)) return false;
 
-    // 2. Check tab permission (except dashboard & projects)
+    // 2. Check tab permission (except dashboard)
     const tabKey = item.href.replace(/^\//, '');
-    if (tabKey === 'dashboard' || tabKey === 'projects') return true;
+    if (tabKey === 'dashboard') return true;
 
     // Admins always have access to all tabs they are allowed to see by role
     if (userRole === 'ADMIN') return true;

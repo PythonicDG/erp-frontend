@@ -1,12 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useAuthStore } from '@/store/auth-store';
 import { Sidebar } from '@/components/layout/sidebar';
 import { Navbar } from '@/components/layout/navbar';
 import type { UserRole } from '@/types/auth';
 import { Loader2 } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 interface DashboardShellProps {
   children: React.ReactNode;
@@ -22,6 +23,7 @@ interface DashboardShellProps {
 export function DashboardShell({ children, requiredRole }: DashboardShellProps) {
   const { user, isAuthenticated, isLoading } = useAuthStore();
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -40,6 +42,26 @@ export function DashboardShell({ children, requiredRole }: DashboardShellProps) 
       router.push(roleMap[user.role]);
     }
   }, [isLoading, isAuthenticated, user, requiredRole, router]);
+
+  useEffect(() => {
+    if (!isLoading && isAuthenticated && user) {
+      const pathParts = pathname.split('/');
+      const tabKey = pathParts[2]; // e.g. projects, ecn, etc.
+      
+      if (tabKey && tabKey !== 'dashboard' && user.role !== 'ADMIN') {
+        const allowed = user.allowed_tabs || [];
+        if (!allowed.includes(tabKey)) {
+          toast.error(`You do not have access to ${tabKey.toUpperCase()}.`);
+          const roleMap: Record<UserRole, string> = {
+            ADMIN: '/admin/dashboard',
+            SUPERVISOR: '/supervisor/dashboard',
+            EMPLOYEE: '/employee/dashboard',
+          };
+          router.push(roleMap[user.role]);
+        }
+      }
+    }
+  }, [isLoading, isAuthenticated, user, pathname, router]);
 
   const [isMobileOpen, setIsMobileOpen] = useState(false);
  
