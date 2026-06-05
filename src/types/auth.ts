@@ -14,6 +14,7 @@ export interface User {
   phone: string;
   role: UserRole;
   is_active: boolean;
+  allowed_tabs?: string[];
   created_at: string;
 }
 

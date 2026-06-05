@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import type { UserRole } from '@/types/auth';
 import { settingsService, CompanyProfile } from '@/services/settings-service';
+import { useAuthStore } from '@/store/auth-store';
 
 interface NavItem {
   label: string;
@@ -128,6 +129,7 @@ export function Sidebar({ userRole, isMobileOpen, onClose }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [profile, setProfile] = useState<CompanyProfile | null>(null);
   const pathname = usePathname();
+  const { user } = useAuthStore();
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -142,7 +144,19 @@ export function Sidebar({ userRole, isMobileOpen, onClose }: SidebarProps) {
   }, []);
 
   const rolePrefix = `/${userRole.toLowerCase()}`;
-  const filteredItems = navItems.filter((item) => item.roles.includes(userRole));
+  const filteredItems = navItems.filter((item) => {
+    // 1. Check role permission
+    if (!item.roles.includes(userRole)) return false;
+
+    // 2. Check tab permission (except dashboard & projects)
+    const tabKey = item.href.replace(/^\//, '');
+    if (tabKey === 'dashboard' || tabKey === 'projects') return true;
+
+    // Admins always have access to all tabs they are allowed to see by role
+    if (userRole === 'ADMIN') return true;
+
+    return !!(user?.allowed_tabs && user.allowed_tabs.includes(tabKey));
+  });
 
   const logoUrl = profile?.logo 
     ? (profile.logo.startsWith('http') ? profile.logo : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}${profile.logo}`)

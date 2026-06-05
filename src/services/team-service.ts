@@ -14,6 +14,7 @@ export interface TeamMember {
   is_active: boolean;
   remarks?: string;
   password?: string;
+  allowed_tabs?: string[];
   created_at: string;
   updated_at: string;
 }

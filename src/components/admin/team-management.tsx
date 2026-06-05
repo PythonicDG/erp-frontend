@@ -199,6 +199,19 @@ export function TeamManagementView() {
   );
 }
 
+const OPTIONAL_TABS = [
+  { key: 'ecn', label: 'ECN' },
+  { key: 'feedback', label: 'Customer Feedback Form' },
+  { key: 'reports', label: 'Reports' },
+  { key: 'engineering-tools', label: 'Engineering Tools' },
+  { key: 'team', label: 'User Master' },
+  { key: 'customers', label: 'Customer Masters' },
+  { key: 'standards', label: 'Standards Master' },
+  { key: 'inspection-authorities', label: 'Inspection Authority Master' },
+  { key: 'workflow', label: 'Workflow Design' },
+  { key: 'settings', label: 'Settings' },
+];
+
 function UserModal({ onClose, onSubmit, member }: any) {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -210,7 +223,8 @@ function UserModal({ onClose, onSubmit, member }: any) {
     role: member?.role || 'EMPLOYEE',
     department: member?.department || '',
     remarks: member?.remarks || '',
-    password: ''
+    password: '',
+    allowed_tabs: member ? (member.allowed_tabs || []) : OPTIONAL_TABS.map(t => t.key)
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -318,6 +332,41 @@ function UserModal({ onClose, onSubmit, member }: any) {
           </div>
 
           <div className="space-y-1.5">
+             <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1 flex items-center gap-1.5">
+               Sidebar Tab Permissions
+             </label>
+             <div className="grid grid-cols-2 gap-3 p-4 bg-slate-50 border border-slate-200 rounded-xl">
+               <label className="flex items-center gap-2 text-xs font-semibold text-slate-400 cursor-not-allowed select-none">
+                 <input type="checkbox" checked disabled className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+                 <span>Dashboard (Default)</span>
+               </label>
+               <label className="flex items-center gap-2 text-xs font-semibold text-slate-400 cursor-not-allowed select-none">
+                 <input type="checkbox" checked disabled className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+                 <span>Project Master (Default)</span>
+               </label>
+               {OPTIONAL_TABS.map((tab) => {
+                 const isChecked = formData.allowed_tabs.includes(tab.key);
+                 return (
+                   <label key={tab.key} className="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer hover:text-slate-900 transition-colors select-none">
+                     <input
+                       type="checkbox"
+                       checked={isChecked}
+                       className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                       onChange={(e) => {
+                         const updated = e.target.checked
+                           ? [...formData.allowed_tabs, tab.key]
+                           : formData.allowed_tabs.filter((k: string) => k !== tab.key);
+                         setFormData({ ...formData, allowed_tabs: updated });
+                       }}
+                     />
+                     <span>{tab.label}</span>
+                   </label>
+                 );
+               })}
+             </div>
+          </div>
+
+          <div className="space-y-1.5">
              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Administrative Remarks</label>
              <textarea 
                className="w-full min-h-[80px] p-3 rounded-lg border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-blue-500/20 outline-hidden transition-all"
@@ -331,7 +380,7 @@ function UserModal({ onClose, onSubmit, member }: any) {
             <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>
             <Button type="submit" loading={loading} className="px-8 shadow-lg shadow-blue-500/20">
                {member ? 'Update Profile' : 'Create Account'}
-            </Button>
+             </Button>
           </div>
         </form>
       </div>
