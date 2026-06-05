@@ -116,6 +116,11 @@ export const workflowService = {
   reorderTemplates: async (orders: { id: number; order: number }[]) => {
     const response = await api.post('/api/workflow/templates/reorder/', { orders });
     return response.data;
+  },
+
+  syncFields: async (stageId: number | string, fields: any[]) => {
+    const response = await api.post(`/api/workflow/templates/${stageId}/sync_fields/`, { fields });
+    return response.data;
   }
 };
 

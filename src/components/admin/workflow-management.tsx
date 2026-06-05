@@ -11,7 +11,8 @@ import {
   CheckCircle2, 
   Clock, 
   Eye,
-  Edit3
+  Edit3,
+  Copy
 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -101,6 +102,45 @@ export function WorkflowManagementView() {
       fetchTemplates();
     } catch (error) {
       toast.error('Failed to delete stage');
+    }
+  };
+
+  const handleDuplicateTemplate = async (template: StageTemplate) => {
+    const toastId = toast.loading('Duplicating stage and fields...');
+    try {
+      const newName = `${template.name} (Copy)`;
+      const newCode = `${template.code}_COPY_${Math.floor(1000 + Math.random() * 9000)}`;
+
+      const newTemplate = await workflowService.createTemplate({
+        name: newName,
+        code: newCode,
+        description: template.description || '',
+        order: templates.length + 1,
+        assigned_role: template.assigned_role,
+        duration_high: template.duration_high,
+        duration_medium: template.duration_medium,
+        duration_low: template.duration_low,
+        is_active: template.is_active,
+        approval_required: template.approval_required,
+        allow_attachments: template.allow_attachments,
+      });
+
+      if (template.fields && template.fields.length > 0) {
+        const fieldsToSync = template.fields.map((f, i) => {
+          const { id, ...rest } = f;
+          return {
+            ...rest,
+            order: i
+          };
+        });
+
+        await workflowService.syncFields(newTemplate.id, fieldsToSync);
+      }
+
+      toast.success('Stage duplicated successfully!', { id: toastId });
+      fetchTemplates();
+    } catch (error) {
+      toast.error('Failed to duplicate stage', { id: toastId });
     }
   };
 
@@ -302,6 +342,14 @@ export function WorkflowManagementView() {
                      <Edit3 className="h-4 w-4 mr-2" /> Design Form
                    </Button>
                  </Link>
+                 <Button 
+                   variant="outline" 
+                   size="sm" 
+                   className="hover:bg-amber-50 hover:text-amber-600 border-amber-200 text-amber-600"
+                   onClick={() => handleDuplicateTemplate(template)}
+                 >
+                   <Copy className="h-4 w-4 mr-2" /> Duplicate
+                 </Button>
                  <Button 
                    variant="ghost" 
                    size="icon" 
