@@ -658,7 +658,7 @@ export function ASCNForm({ id, role }: ASCNFormProps) {
             >
               <option value="">-- Select Admin --</option>
               {teamMembers
-                .filter((m) => m.role === 'ADMIN' && m.is_active)
+                .filter((m) => (m.role === 'ADMIN' || m.role === 'SUPERADMIN') && m.is_active)
                 .map((m) => (
                   <option key={m.id} value={m.id}>
                     {m.full_name} {m.admin_code ? `(${m.admin_code})` : ''}

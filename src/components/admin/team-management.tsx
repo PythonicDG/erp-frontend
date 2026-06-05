@@ -128,11 +128,12 @@ export function TeamManagementView() {
             header: "Role", 
             cell: (m) => (
               <Badge variant="outline" className={`flex w-fit items-center gap-1 ${
+                m.role === 'SUPERADMIN' ? 'text-rose-600 border-rose-100 bg-rose-50' : 
                 m.role === 'ADMIN' ? 'text-purple-600 border-purple-100 bg-purple-50' : 
                 m.role === 'SUPERVISOR' ? 'text-blue-600 border-blue-100 bg-blue-50' : 
                 'text-slate-600 border-slate-100 bg-slate-50'
               }`}>
-                {m.role === 'ADMIN' ? <Shield size={12} /> : m.role === 'SUPERVISOR' ? <UserCheck size={12} /> : <User size={12} />}
+                {m.role === 'SUPERADMIN' || m.role === 'ADMIN' ? <Shield size={12} /> : m.role === 'SUPERVISOR' ? <UserCheck size={12} /> : <User size={12} />}
                 {m.role} {m.role === 'ADMIN' && m.admin_code ? `(${m.admin_code})` : ''}
               </Badge>
             )
@@ -169,16 +170,35 @@ export function TeamManagementView() {
             </div>
           </div>
         }
-        actions={(m) => (
-          <div className="flex justify-end gap-2">
-            <Button aria-label="Edit team member" variant="ghost" size="icon" onClick={() => { setEditingMember(m); setIsModalOpen(true); }} className="text-slate-400 hover:text-blue-600">
-              <Edit2 className="h-4 w-4" />
-            </Button>
-            <Button aria-label="Delete team member" variant="ghost" size="icon" onClick={() => handleDelete(m.id)} className="text-slate-400 hover:text-red-500">
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </div>
-        )}
+        actions={(m) => {
+          const isSuperAdmin = m.role === 'SUPERADMIN';
+          return (
+            <div className="flex justify-end gap-2">
+              <Button 
+                aria-label="Edit team member" 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => { setEditingMember(m); setIsModalOpen(true); }} 
+                className={`text-slate-400 ${isSuperAdmin ? 'opacity-40 cursor-not-allowed' : 'hover:text-blue-600'}`}
+                disabled={isSuperAdmin}
+                title={isSuperAdmin ? "SuperAdmin can only be edited from Django Admin" : "Edit team member"}
+              >
+                <Edit2 className="h-4 w-4" />
+              </Button>
+              <Button 
+                aria-label="Delete team member" 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => handleDelete(m.id)} 
+                className={`text-slate-400 ${isSuperAdmin ? 'opacity-40 cursor-not-allowed' : 'hover:text-red-500'}`}
+                disabled={isSuperAdmin}
+                title={isSuperAdmin ? "SuperAdmin can only be deleted from Django Admin" : "Delete team member"}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          );
+        }}
         emptyState={
           <div className="py-12 text-center">
             <UserX className="h-12 w-12 mx-auto text-slate-300 mb-4" />
@@ -356,14 +376,21 @@ function UserModal({ onClose, onSubmit, member }: any) {
                  <span>Dashboard (Default)</span>
                </label>
                {OPTIONAL_TABS.map((tab) => {
-                 const isChecked = formData.allowed_tabs.includes(tab.key);
+                 const isSuperAdmin = formData.role === 'SUPERADMIN';
+                 const isChecked = isSuperAdmin || formData.allowed_tabs.includes(tab.key);
                  return (
-                   <label key={tab.key} className="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer hover:text-slate-900 transition-colors select-none">
+                   <label key={tab.key} className={`flex items-center gap-2 text-xs font-semibold select-none transition-colors ${
+                     isSuperAdmin 
+                       ? 'text-slate-400 cursor-not-allowed' 
+                       : 'text-slate-700 cursor-pointer hover:text-slate-900'
+                   }`}>
                      <input
                        type="checkbox"
                        checked={isChecked}
-                       className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                       disabled={isSuperAdmin}
+                       className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer disabled:cursor-not-allowed"
                        onChange={(e) => {
+                         if (isSuperAdmin) return;
                          const updated = e.target.checked
                            ? [...formData.allowed_tabs, tab.key]
                            : formData.allowed_tabs.filter((k: string) => k !== tab.key);
