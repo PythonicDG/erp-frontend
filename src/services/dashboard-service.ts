@@ -8,6 +8,8 @@ export interface DashboardData {
     open: number;
     customers: number;
     ecns?: number;
+    pending_ecns?: number;
+    pending_ascns?: number;
     completion_rate: number;
   };
   charts: {

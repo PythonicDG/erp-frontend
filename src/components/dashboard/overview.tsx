@@ -13,10 +13,9 @@ import {
   Layers, 
   Calendar, 
   Info,
-  ArrowUpRight,
-  ArrowDownRight,
   ChevronDown,
-  FileEdit
+  FileEdit,
+  FileText
 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -95,7 +94,12 @@ export function DashboardOverview() {
     <div className="p-4 sm:p-6 md:p-8 max-w-7xl mx-auto space-y-6 sm:space-y-8">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">Executive Dashboard</h1>
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">Design & Development Dashboard</h1>
+            <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100 border-none font-bold text-xs px-2.5 py-1 rounded-full">
+              Project Completion Rate: {data.stats.completion_rate}%
+            </Badge>
+          </div>
           <p className="text-sm text-slate-500">Real-time operational metrics and system overview.</p>
         </div>
         
@@ -177,19 +181,20 @@ export function DashboardOverview() {
           onClick={() => router.push(user ? `/${user.role.toLowerCase()}/dashboard/closed` : '/dashboard/closed')}
         />
         <StatCard 
-          title="ECN" 
-          value={data.stats.ecns ?? 0} 
+          title="Pending ECN" 
+          value={data.stats.pending_ecns ?? 0} 
           icon={<FileEdit className="text-indigo-600" />} 
           trend="" 
           color="indigo"
           onClick={() => router.push(user ? `/${user.role.toLowerCase()}/ecn` : '/ecn')}
         />
         <StatCard 
-          title="Completion Rate" 
-          value={`${data.stats.completion_rate}%`} 
-          icon={<TrendingUp className="text-emerald-600" />} 
-          trend="+2.4%" 
-          color="emerald"
+          title="Pending ASCN" 
+          value={data.stats.pending_ascns ?? 0} 
+          icon={<FileText className="text-rose-600" />} 
+          trend="" 
+          color="rose"
+          onClick={() => router.push(user ? `/${user.role.toLowerCase()}/ascn` : '/ascn')}
         />
       </div>
 
@@ -347,9 +352,6 @@ function StatCard({ title, value, icon, trend, color, onClick }: any) {
       <div className="flex justify-between items-start mb-4">
         <div className={`h-12 w-12 rounded-2xl bg-${color}-50 flex items-center justify-center border border-${color}-100 group-hover:bg-${color}-500 group-hover:text-white transition-colors`}>
           {React.cloneElement(icon, { size: 24, className: `group-hover:text-white transition-colors` })}
-        </div>
-        <div className={`flex items-center gap-1 text-[10px] font-bold ${isPositive ? 'text-emerald-500' : 'text-rose-500'}`}>
-          {isPositive ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />} {trend}
         </div>
       </div>
       <p className="text-slate-500 text-sm font-medium">{title}</p>
