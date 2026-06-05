@@ -33,8 +33,13 @@ export function DashboardShell({ children, requiredRole }: DashboardShellProps) 
 
   useEffect(() => {
     if (!isLoading && isAuthenticated && user && user.role !== requiredRole) {
+      // Allow SUPERADMIN to access ADMIN dashboard routes
+      if (user.role === 'SUPERADMIN' && requiredRole === 'ADMIN') {
+        return;
+      }
       // Redirect to the user's actual dashboard
       const roleMap: Record<UserRole, string> = {
+        SUPERADMIN: '/admin/dashboard',
         ADMIN: '/admin/dashboard',
         SUPERVISOR: '/supervisor/dashboard',
         EMPLOYEE: '/employee/dashboard',
@@ -48,11 +53,13 @@ export function DashboardShell({ children, requiredRole }: DashboardShellProps) 
       const pathParts = pathname.split('/');
       const tabKey = pathParts[2]; // e.g. projects, ecn, etc.
       
-      if (tabKey && tabKey !== 'dashboard' && user.role !== 'ADMIN') {
+      // SuperAdmin has access to all tabs; other roles must be checked in allowed_tabs
+      if (tabKey && tabKey !== 'dashboard' && user.role !== 'SUPERADMIN') {
         const allowed = user.allowed_tabs || [];
         if (!allowed.includes(tabKey)) {
           toast.error(`You do not have access to ${tabKey.toUpperCase()}.`);
           const roleMap: Record<UserRole, string> = {
+            SUPERADMIN: '/admin/dashboard',
             ADMIN: '/admin/dashboard',
             SUPERVISOR: '/supervisor/dashboard',
             EMPLOYEE: '/employee/dashboard',
@@ -77,7 +84,11 @@ export function DashboardShell({ children, requiredRole }: DashboardShellProps) 
    }
  
    if (user.role !== requiredRole) {
-     return null; // Will redirect via useEffect
+     if (user.role === 'SUPERADMIN' && requiredRole === 'ADMIN') {
+       // Allow SUPERADMIN to bypass this check
+     } else {
+       return null; // Will redirect via useEffect
+     }
    }
  
    return (

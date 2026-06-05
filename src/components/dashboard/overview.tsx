@@ -90,7 +90,7 @@ export function DashboardOverview() {
 
   const checkAccess = (tabKey: string) => {
     if (!user) return false;
-    if (user.role === 'ADMIN') return true;
+    if (user.role === 'SUPERADMIN') return true;
     return !!(user.allowed_tabs && user.allowed_tabs.includes(tabKey));
   };
 

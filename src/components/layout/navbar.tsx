@@ -29,6 +29,7 @@ export function Navbar({ onMenuClick }: NavbarProps) {
 
 
   const roleColorClass = {
+    SUPERADMIN: 'role-admin',
     ADMIN: 'role-admin',
     SUPERVISOR: 'role-supervisor',
     EMPLOYEE: 'role-employee',

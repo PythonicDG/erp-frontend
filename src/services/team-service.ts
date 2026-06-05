@@ -10,7 +10,7 @@ export interface TeamMember {
   username?: string;
   phone: string;
   department: string;
-  role: 'ADMIN' | 'SUPERVISOR' | 'EMPLOYEE';
+  role: 'SUPERADMIN' | 'ADMIN' | 'SUPERVISOR' | 'EMPLOYEE';
   admin_code?: string;
   is_active: boolean;
   remarks?: string;

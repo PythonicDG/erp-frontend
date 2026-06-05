@@ -33,7 +33,7 @@ interface ECNListProps {
 export function ECNList({ role }: ECNListProps) {
   const router = useRouter();
   const { user } = useAuthStore();
-  const isAdmin = role === 'admin' || user?.role === 'ADMIN';
+  const isAdmin = role === 'admin' || user?.role === 'ADMIN' || user?.role === 'SUPERADMIN';
 
   const {
     ecns,

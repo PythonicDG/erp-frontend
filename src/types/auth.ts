@@ -2,7 +2,7 @@
 // Authentication Type Definitions
 // ============================================
 
-export type UserRole = 'ADMIN' | 'SUPERVISOR' | 'EMPLOYEE';
+export type UserRole = 'SUPERADMIN' | 'ADMIN' | 'SUPERVISOR' | 'EMPLOYEE';
 
 export interface User {
   id: number;
@@ -73,6 +73,7 @@ export interface AuthState {
 
 // Role-based route mapping
 export const ROLE_DASHBOARD_MAP: Record<UserRole, string> = {
+  SUPERADMIN: '/admin/dashboard',
   ADMIN: '/admin/dashboard',
   SUPERVISOR: '/supervisor/dashboard',
   EMPLOYEE: '/employee/dashboard',

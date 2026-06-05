@@ -42,7 +42,7 @@ export function ECNDetail({ id, role }: ECNDetailProps) {
   const [loading, setLoading] = useState(true);
   const [workflowLoading, setWorkflowLoading] = useState(false);
 
-  const isAdmin = role === 'admin' || user?.role === 'ADMIN';
+  const isAdmin = role === 'admin' || user?.role === 'ADMIN' || user?.role === 'SUPERADMIN';
   const isSupervisor = role === 'supervisor' || user?.role === 'SUPERVISOR' || isAdmin;
 
   const logoUrl = companyProfile?.logo 

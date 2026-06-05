@@ -37,89 +37,91 @@ const navItems: NavItem[] = [
     label: 'Dashboard',
     href: '/dashboard',
     icon: <LayoutDashboard size={20} />,
-    roles: ['ADMIN', 'SUPERVISOR', 'EMPLOYEE'],
+    roles: ['SUPERADMIN', 'ADMIN', 'SUPERVISOR', 'EMPLOYEE'],
   },
   {
     label: 'Project Master',
     href: '/projects',
     icon: <FolderKanban size={20} />,
-    roles: ['ADMIN', 'SUPERVISOR', 'EMPLOYEE'],
+    roles: ['SUPERADMIN', 'ADMIN', 'SUPERVISOR', 'EMPLOYEE'],
   },
   {
     label: 'ECN',
     href: '/ecn',
     icon: <FileEdit size={20} />,
-    roles: ['ADMIN', 'SUPERVISOR', 'EMPLOYEE'],
+    roles: ['SUPERADMIN', 'ADMIN', 'SUPERVISOR', 'EMPLOYEE'],
   },
   {
     label: 'ASCN',
     href: '/ascn',
     icon: <FileEdit size={20} />,
-    roles: ['ADMIN', 'SUPERVISOR', 'EMPLOYEE'],
+    roles: ['SUPERADMIN', 'ADMIN', 'SUPERVISOR', 'EMPLOYEE'],
   },
   {
     label: 'Customer Feedback Form',
     href: '/feedback',
     icon: <ClipboardList size={20} />,
-    roles: ['ADMIN', 'SUPERVISOR', 'EMPLOYEE'],
+    roles: ['SUPERADMIN', 'ADMIN', 'SUPERVISOR', 'EMPLOYEE'],
   },
   {
     label: 'Reports',
     href: '/reports',
     icon: <FileText size={20} />,
-    roles: ['ADMIN', 'SUPERVISOR', 'EMPLOYEE'],
+    roles: ['SUPERADMIN', 'ADMIN', 'SUPERVISOR', 'EMPLOYEE'],
   },
   {
     label: 'Engineering Tools',
     href: '/engineering-tools',
     icon: <Calculator size={20} />,
-    roles: ['ADMIN', 'SUPERVISOR', 'EMPLOYEE'],
+    roles: ['SUPERADMIN', 'ADMIN', 'SUPERVISOR', 'EMPLOYEE'],
   },
   {
     label: 'User Master',
     href: '/team',
     icon: <Users size={20} />,
-    roles: ['ADMIN', 'SUPERVISOR'],
+    roles: ['SUPERADMIN', 'ADMIN', 'SUPERVISOR'],
   },
   {
     label: 'Customer Masters',
     href: '/customers',
     icon: <Building2 size={20} />,
-    roles: ['ADMIN', 'SUPERVISOR', 'EMPLOYEE'],
+    roles: ['SUPERADMIN', 'ADMIN', 'SUPERVISOR', 'EMPLOYEE'],
   },
   {
     label: 'Standards Master',
     href: '/standards',
     icon: <BookOpen size={20} />,
-    roles: ['ADMIN'],
+    roles: ['SUPERADMIN', 'ADMIN'],
   },
   {
     label: 'Inspection Authority Master',
     href: '/inspection-authorities',
     icon: <Shield size={20} />,
-    roles: ['ADMIN'],
+    roles: ['SUPERADMIN', 'ADMIN'],
   },
   {
     label: 'Workflow Design',
     href: '/workflow',
     icon: <Layers size={20} />,
-    roles: ['ADMIN'],
+    roles: ['SUPERADMIN', 'ADMIN'],
   },
   {
     label: 'Settings',
     href: '/settings',
     icon: <Settings size={20} />,
-    roles: ['ADMIN'],
+    roles: ['SUPERADMIN', 'ADMIN'],
   },
 ];
 
 const roleIcons: Record<UserRole, React.ReactNode> = {
+  SUPERADMIN: <Shield size={14} />,
   ADMIN: <Shield size={14} />,
   SUPERVISOR: <UserCog size={14} />,
   EMPLOYEE: <Briefcase size={14} />,
 };
 
 const roleLabels: Record<UserRole, string> = {
+  SUPERADMIN: 'SuperAdmin Panel',
   ADMIN: 'Admin Panel',
   SUPERVISOR: 'Supervisor Panel',
   EMPLOYEE: 'Employee Portal',
@@ -149,7 +151,7 @@ export function Sidebar({ userRole, isMobileOpen, onClose }: SidebarProps) {
     fetchProfile();
   }, []);
 
-  const rolePrefix = `/${userRole.toLowerCase()}`;
+  const rolePrefix = userRole === 'SUPERADMIN' ? '/admin' : `/${userRole.toLowerCase()}`;
   const filteredItems = navItems.filter((item) => {
     // 1. Check role permission
     if (!item.roles.includes(userRole)) return false;
@@ -158,8 +160,8 @@ export function Sidebar({ userRole, isMobileOpen, onClose }: SidebarProps) {
     const tabKey = item.href.replace(/^\//, '');
     if (tabKey === 'dashboard') return true;
 
-    // Admins always have access to all tabs they are allowed to see by role
-    if (userRole === 'ADMIN') return true;
+    // SuperAdmins always have access to all tabs they are allowed to see by role
+    if (userRole === 'SUPERADMIN') return true;
 
     return !!(user?.allowed_tabs && user.allowed_tabs.includes(tabKey));
   });

@@ -1061,7 +1061,7 @@ export function ProjectDetailView({ id, role }: ProjectDetailViewProps) {
                     
                     {(activeStage.status === 'Submitted' || activeStage.status === 'Pending Approval') && (
                       <span className="text-[10px] font-bold text-slate-400 uppercase bg-slate-50 px-2 py-0.5 rounded border border-slate-100">
-                        Pending with: {activeStage.template_details.assigned_role === 'ADMIN' ? 'Administrator' : 'Supervisor'}
+                        Pending with: {(activeStage.template_details.assigned_role === 'ADMIN' || activeStage.template_details.assigned_role === 'SUPERADMIN') ? 'Administrator' : 'Supervisor'}
                       </span>
                     )}
                     

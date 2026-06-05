@@ -33,7 +33,7 @@ interface ASCNListProps {
 export function ASCNList({ role }: ASCNListProps) {
   const router = useRouter();
   const { user } = useAuthStore();
-  const isAdmin = role === 'admin' || user?.role === 'ADMIN';
+  const isAdmin = role === 'admin' || user?.role === 'ADMIN' || user?.role === 'SUPERADMIN';
 
   const {
     ascns,

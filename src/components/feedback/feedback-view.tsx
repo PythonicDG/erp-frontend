@@ -35,7 +35,7 @@ interface FeedbackViewProps {
 
 export function FeedbackView({ role }: FeedbackViewProps) {
   const { user } = useAuthStore();
-  const isAdminOrSupervisor = role === 'admin' || role === 'supervisor' || user?.role === 'ADMIN' || user?.role === 'SUPERVISOR';
+  const isAdminOrSupervisor = role === 'admin' || role === 'supervisor' || user?.role === 'ADMIN' || user?.role === 'SUPERVISOR' || user?.role === 'SUPERADMIN';
   
   const [feedbacks, setFeedbacks] = useState<CustomerFeedback[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);

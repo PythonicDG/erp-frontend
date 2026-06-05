@@ -54,7 +54,7 @@ export const ProjectTable: React.FC<ProjectTableProps> = ({
   onDelete,
 }) => {
   const { user } = useAuthStore();
-  const isAdmin = user?.role === 'ADMIN';
+  const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPERADMIN';
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [localFilters, setLocalFilters] = useState({
