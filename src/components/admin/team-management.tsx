@@ -78,11 +78,13 @@ export function TeamManagementView() {
     const fullName = (m.full_name || '').toLowerCase();
     const email = (m.email || '').toLowerCase();
     const empId = (m.employee_id || '').toLowerCase();
+    const username = (m.username || '').toLowerCase();
 
     const matchesSearch = 
       fullName.includes(searchStr) ||
       email.includes(searchStr) ||
-      empId.includes(searchStr);
+      empId.includes(searchStr) ||
+      username.includes(searchStr);
     
     const matchesRole = roleFilter === 'ALL' || m.role === roleFilter;
     
@@ -117,7 +119,7 @@ export function TeamManagementView() {
                 </div>
                 <div className="flex flex-col">
                   <span className="font-bold text-slate-900">{m.full_name}</span>
-                  <span className="text-xs text-slate-400">{m.email}</span>
+                  <span className="text-xs text-slate-400">{m.email} {m.username ? `| @${m.username}` : ''}</span>
                 </div>
               </div>
             )
@@ -203,6 +205,7 @@ function UserModal({ onClose, onSubmit, member }: any) {
     first_name: member?.first_name || '',
     last_name: member?.last_name || '',
     email: member?.email || '',
+    username: member?.username || '',
     phone: member?.phone || '',
     role: member?.role || 'EMPLOYEE',
     department: member?.department || '',
@@ -232,8 +235,8 @@ function UserModal({ onClose, onSubmit, member }: any) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
-        <div className="px-8 py-6 bg-slate-50 border-b flex justify-between items-center">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
+        <div className="px-8 py-6 bg-slate-50 border-b flex justify-between items-center shrink-0">
           <div>
             <h2 className="text-xl font-bold text-slate-900">{member ? 'Edit Team Member' : 'Add New Member'}</h2>
             <p className="text-xs text-slate-500 mt-0.5">{member ? `Modifying profile for ${member.employee_id}` : 'Create a new organizational user account'}</p>
@@ -241,7 +244,7 @@ function UserModal({ onClose, onSubmit, member }: any) {
           <Button variant="ghost" size="icon" onClick={onClose}><Trash2 className="h-5 w-5" /></Button>
         </div>
         
-        <form onSubmit={handleSubmit} className="p-8 space-y-6">
+        <form onSubmit={handleSubmit} className="p-8 space-y-6 overflow-y-auto flex-1">
           <div className="grid grid-cols-2 gap-6">
             <Input 
               label="First Name" 
@@ -262,6 +265,12 @@ function UserModal({ onClose, onSubmit, member }: any) {
               onChange={(e) => setFormData({...formData, email: e.target.value})}
               required
               disabled={!!member}
+            />
+            <Input 
+              label="Username (Optional)" 
+              value={formData.username} 
+              onChange={(e) => setFormData({...formData, username: e.target.value})}
+              placeholder="Leave blank to auto-generate"
             />
             <Input 
               label="Phone Number" 

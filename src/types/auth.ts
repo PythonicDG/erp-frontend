@@ -9,6 +9,7 @@ export interface User {
   first_name: string;
   last_name: string;
   full_name: string;
+  username: string;
   email: string;
   phone: string;
   role: UserRole;
@@ -17,7 +18,7 @@ export interface User {
 }
 
 export interface LoginCredentials {
-  email: string;
+  username_or_email: string;
   password: string;
 }
 

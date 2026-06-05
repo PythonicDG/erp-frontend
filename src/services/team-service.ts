@@ -7,6 +7,7 @@ export interface TeamMember {
   last_name: string;
   full_name: string;
   email: string;
+  username?: string;
   phone: string;
   department: string;
   role: 'ADMIN' | 'SUPERVISOR' | 'EMPLOYEE';
