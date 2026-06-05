@@ -26,6 +26,7 @@ import { DynamicForm } from '@/components/workflow/dynamic-form';
 import { useProjects } from '@/hooks/use-projects';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
+import { ecnService, ECN } from '@/services/ecn-service';
 
 const parseDateString = (str: string) => {
   const parts = str.split('-');
@@ -56,8 +57,9 @@ export function ReportsListView({ role, initialProjectId }: ReportsListViewProps
   const [stages, setStages] = useState<StageInstance[]>([]);
   const [companyProfile, setCompanyProfile] = useState<CompanyProfile | null>(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
-  const [activeTab, setActiveTab] = useState<'forms' | 'documents' | 'plan'>('forms');
+  const [activeTab, setActiveTab] = useState<'forms' | 'documents' | 'plan' | 'ecn'>('forms');
   const [viewingStage, setViewingStage] = useState<StageInstance | null>(null);
+  const [ecns, setEcns] = useState<ECN[]>([]);
 
   // Search states for searchable dropdown
   const [searchQuery, setSearchQuery] = useState('');
@@ -90,19 +92,23 @@ export function ReportsListView({ role, initialProjectId }: ReportsListViewProps
     if (!projectId) {
       setProject(null);
       setStages([]);
+      setEcns([]);
       return;
     }
     
     setLoadingDetails(true);
     try {
-      const [projectData, stagesData] = await Promise.all([
+      const [projectData, stagesData, ecnsData] = await Promise.all([
         projectService.getById(projectId),
-        workflowService.getProjectStages(projectId)
+        workflowService.getProjectStages(projectId),
+        ecnService.getAll({ project: projectId }).catch(() => ({ results: [] }))
       ]);
       const stagesList = Array.isArray(stagesData) ? stagesData : (stagesData as any)?.results || [];
+      const ecnsList = Array.isArray(ecnsData) ? ecnsData : (ecnsData as any)?.results || [];
       
       setProject(projectData);
       setStages(stagesList);
+      setEcns(ecnsList);
     } catch (error) {
       toast.error('Failed to load project report specifications');
     } finally {
@@ -1186,6 +1192,17 @@ export function ReportsListView({ role, initialProjectId }: ReportsListViewProps
             >
               📅 Project Plan (D&D Timeline)
             </button>
+            <button
+              type="button"
+              onClick={() => { setActiveTab('ecn'); setViewingStage(null); }}
+              className={`pb-3 text-sm font-bold border-b-2 transition-all cursor-pointer flex items-center gap-2 ${
+                activeTab === 'ecn'
+                  ? 'border-blue-600 text-blue-600'
+                  : 'border-transparent text-slate-400 hover:text-slate-700'
+              }`}
+            >
+              🛠️ ECN ({ecns.length})
+            </button>
           </div>
 
           {/* Sub Tab list contents */}
@@ -1320,6 +1337,87 @@ export function ReportsListView({ role, initialProjectId }: ReportsListViewProps
                 emptyState={
                   <div className="py-12 text-center text-slate-400 italic">
                     No attached specifications or PDFs found uploaded for this project.
+                  </div>
+                }
+              />
+            ) : activeTab === 'ecn' ? (
+              <DataTable 
+                data={ecns}
+                columns={[
+                  {
+                    header: "ECN Number",
+                    cell: (e) => <span className="font-semibold text-blue-600 tracking-tight">{e.ecn_number || 'Draft'}</span>,
+                    sortable: true
+                  },
+                  {
+                    header: "ECN Date",
+                    cell: (e) => e.ecn_date ? new Date(e.ecn_date).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : '-',
+                    sortable: true
+                  },
+                  {
+                    header: "Raised Dept.",
+                    accessorKey: "raised_department"
+                  },
+                  {
+                    header: "Initiated By",
+                    accessorKey: "change_initiated_by"
+                  },
+                  {
+                    header: "Status",
+                    cell: (e) => {
+                      const getStatusVariant = (status: string) => {
+                        switch (status) {
+                          case 'Draft': return 'default';
+                          case 'Submitted': return 'info';
+                          case 'Reviewed': return 'warning';
+                          case 'Approved': return 'success';
+                          case 'Rejected': return 'danger';
+                          default: return 'default';
+                        }
+                      };
+                      return (
+                        <Badge variant={getStatusVariant(e.status)}>
+                          {e.status}
+                        </Badge>
+                      );
+                    }
+                  }
+                ]}
+                 onRowClick={(e) => {
+                  router.push(`/${role}/ecn/${e.id}`);
+                }}
+                searchPlaceholder="Search ECNs..."
+                actions={(e) => (
+                  <div className="flex items-center justify-end gap-1.5">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      title="View ECN" 
+                      onClick={(evt) => { evt.stopPropagation(); router.push(`/${role}/ecn/${e.id}`); }} 
+                      className="h-8 w-8 text-slate-400 hover:text-blue-600"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                    <a 
+                      href={`/${role}/ecn/${e.id}?print=true`} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      onClick={(evt) => evt.stopPropagation()}
+                    >
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        title="Print ECN" 
+                        className="h-8 w-8 text-slate-400 hover:text-blue-600"
+                      >
+                        <Printer className="h-4 w-4" />
+                      </Button>
+                    </a>
+                  </div>
+                )}
+                emptyState={
+                  <div className="py-12 text-center text-slate-400 italic">
+                    No Engineering Change Notes (ECN) found generated for this project.
                   </div>
                 }
               />

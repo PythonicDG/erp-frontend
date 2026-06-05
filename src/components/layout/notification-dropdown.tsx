@@ -142,9 +142,12 @@ export function NotificationDropdown() {
 
     if (notification.link) {
       const rolePrefix = `/${user?.role?.toLowerCase() || 'employee'}`;
-      const finalLink = notification.link.startsWith('/') 
-        ? `${rolePrefix}${notification.link}`
-        : `${rolePrefix}/${notification.link}`;
+      let finalLink = notification.link;
+      if (!finalLink.startsWith('/admin') && !finalLink.startsWith('/supervisor') && !finalLink.startsWith('/employee')) {
+        finalLink = finalLink.startsWith('/') 
+          ? `${rolePrefix}${finalLink}`
+          : `${rolePrefix}/${finalLink}`;
+      }
       router.push(finalLink);
     }
     setIsOpen(false);
