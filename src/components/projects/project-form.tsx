@@ -369,19 +369,13 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({ initialData, role }) =
             </div>
           </Card>
 
-          <Card title="Part Details" subtitle="Customer and internal part references">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Card title="Part Details" subtitle="Customer part references">
+            <div className="grid grid-cols-1 gap-6">
               <Input
                 label="Customer Part Number"
                 placeholder="e.g. PAAG464305"
                 {...register('customer_part_no')}
                 error={errors.customer_part_no?.message}
-              />
-              <Input
-                label="PCEPL Part Number"
-                placeholder="e.g. 30071850"
-                {...register('pcepl_part_no')}
-                error={errors.pcepl_part_no?.message}
               />
             </div>
           </Card>

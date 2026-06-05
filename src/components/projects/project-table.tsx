@@ -109,11 +109,12 @@ export const ProjectTable: React.FC<ProjectTableProps> = ({
   const exportToCSV = () => {
     if (projects.length === 0) return;
     
-    const headers = ['PID', 'Project Name', 'Customer', 'Type', 'Status', 'Target Date'];
+    const headers = ['PID', 'Project Name', 'Customer', 'PCEPL Part No', 'Type', 'Status', 'Target Date'];
     const rows = projects.map(p => [
       p.pid,
       p.name,
       p.customer_name,
+      p.pcepl_part_no || 'N/A',
       p.project_type,
       p.status,
       p.target_completion_date || 'N/A'
@@ -155,6 +156,11 @@ export const ProjectTable: React.FC<ProjectTableProps> = ({
           { 
             header: "Customer", 
             accessorKey: "customer_name",
+            sortable: true
+          },
+          {
+            header: "PCEPL Part No",
+            cell: (p) => <span className="font-mono text-slate-500">{p.pcepl_part_no || '—'}</span>,
             sortable: true
           },
           { 

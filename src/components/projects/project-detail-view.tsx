@@ -1097,32 +1097,6 @@ export function ProjectDetailView({ id, role }: ProjectDetailViewProps) {
                       </div>
                     )}
 
-                    {/* 1. Project & Customer Details */}
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
-                        <div className="h-6 w-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold">1</div>
-                        <h3 className="font-bold text-slate-900 uppercase tracking-tight text-sm">Project & Customer Details</h3>
-                      </div>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 bg-slate-50/50 p-4 rounded-xl border border-slate-100">
-                        <div className="space-y-1">
-                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Customer Name</p>
-                          <p className="text-sm font-semibold text-slate-700">{project.customer_name}</p>
-                        </div>
-                        <div className="space-y-1">
-                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Project Name</p>
-                          <p className="text-sm font-semibold text-slate-700">{project.name}</p>
-                        </div>
-                        <div className="space-y-1">
-                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Customer Part Number</p>
-                          <p className="text-sm font-semibold text-slate-700">{project.customer_part_no || 'N/A'}</p>
-                        </div>
-                        <div className="space-y-1">
-                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Project Type</p>
-                          <p className="text-sm font-semibold text-slate-700">{project.project_type}</p>
-                        </div>
-                      </div>
-                    </div>
 
                     <DynamicForm 
                       key={activeStage.id}

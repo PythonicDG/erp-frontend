@@ -37,13 +37,30 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
 
   const { register, handleSubmit, formState: { errors } } = formMethods;
 
-  // Group fields by section
-  const sections = fields.reduce((acc, field) => {
-    const sectionName = field.section || 'General';
-    if (!acc[sectionName]) acc[sectionName] = [];
-    acc[sectionName].push(field);
-    return acc;
-  }, {} as Record<string, FormField[]>);
+  const isProjectCustomerSection = (sec?: string) => {
+    if (!sec) return false;
+    const normalized = sec
+      .toLowerCase()
+      .replace(/&amp;/g, '&')
+      .replace(/[^a-z0-9]/g, '')
+      .trim();
+    return normalized === 'projectcustomerdetails';
+  };
+
+  // Identify fields belonging to "Project & Customer Details"
+  const projectCustomerFields = fields.filter(
+    field => isProjectCustomerSection(field.section)
+  );
+
+  // Group other fields by section
+  const sections = fields
+    .filter(field => !isProjectCustomerSection(field.section))
+    .reduce((acc, field) => {
+      const sectionName = field.section || 'General';
+      if (!acc[sectionName]) acc[sectionName] = [];
+      acc[sectionName].push(field);
+      return acc;
+    }, {} as Record<string, FormField[]>);
 
   const renderField = (field: FormField) => {
     if (field.field_type === 'grid') {
@@ -86,6 +103,44 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
   return (
     <FormProvider {...formMethods}>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-12">
+        {/* Section 1: Project & Customer Details */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
+            <div className="h-6 w-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold">1</div>
+            <h3 className="font-bold text-slate-900 uppercase tracking-tight text-sm">Project & Customer Details</h3>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 bg-slate-50/50 p-4 rounded-xl border border-slate-100">
+            <div className="space-y-1">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Customer Name</p>
+              <p className="text-sm font-semibold text-slate-700">{project.customer_name}</p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Project Name</p>
+              <p className="text-sm font-semibold text-slate-700">{project.name}</p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Customer Part Number</p>
+              <p className="text-sm font-semibold text-slate-700">{project.customer_part_no || 'N/A'}</p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Project Type</p>
+              <p className="text-sm font-semibold text-slate-700">{project.project_type}</p>
+            </div>
+          </div>
+
+          {/* Additional Dynamic Fields for Section 1 */}
+          {projectCustomerFields.length > 0 && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 pt-4">
+              {projectCustomerFields.sort((a, b) => a.order - b.order).map(f => (
+                <div key={f.id} className={f.field_type === 'grid' || f.field_type === 'textarea' ? 'md:col-span-2' : ''}>
+                  {renderField(f)}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
         {/* Dynamic Sections */}
         {Object.entries(sections).map(([name, sectionFields], index) => (
           <div key={name} className="space-y-6">
