@@ -88,6 +88,20 @@ export function DashboardOverview() {
     fetchDashboard(selectedYear, selectedMonth);
   }, [selectedYear, selectedMonth]);
 
+  const checkAccess = (tabKey: string) => {
+    if (!user) return false;
+    if (user.role === 'ADMIN') return true;
+    return !!(user.allowed_tabs && user.allowed_tabs.includes(tabKey));
+  };
+
+  const handleCardClick = (tabKey: string, dest: string) => {
+    if (checkAccess(tabKey)) {
+      router.push(dest);
+    } else {
+      toast.error(`You do not have access to ${tabKey.toUpperCase()}. Please contact your administrator.`, { icon: '🚫' });
+    }
+  };
+
   if (loading || !data) return <div className="p-20 text-center animate-pulse text-slate-500">Calculating analytics...</div>;
 
   return (
@@ -186,7 +200,7 @@ export function DashboardOverview() {
           icon={<FileEdit className="text-indigo-600" />} 
           trend="" 
           color="indigo"
-          onClick={() => router.push(user ? `/${user.role.toLowerCase()}/ecn` : '/ecn')}
+          onClick={() => handleCardClick('ecn', user ? `/${user.role.toLowerCase()}/ecn` : '/ecn')}
         />
         <StatCard 
           title="Pending ASCN" 
@@ -194,7 +208,7 @@ export function DashboardOverview() {
           icon={<FileText className="text-rose-600" />} 
           trend="" 
           color="rose"
-          onClick={() => router.push(user ? `/${user.role.toLowerCase()}/ascn` : '/ascn')}
+          onClick={() => handleCardClick('ascn', user ? `/${user.role.toLowerCase()}/ascn` : '/ascn')}
         />
       </div>
 
