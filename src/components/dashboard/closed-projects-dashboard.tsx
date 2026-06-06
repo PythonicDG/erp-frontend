@@ -59,7 +59,7 @@ export function ClosedProjectsDashboard() {
   return (
     <div className="p-4 sm:p-6 md:p-8 max-w-7xl mx-auto space-y-6 sm:space-y-8 animate-in fade-in duration-500">
       <div className="flex items-start sm:items-center gap-3 sm:gap-4">
-        <Button variant="ghost" size="icon" className="mt-1 sm:mt-0 flex-shrink-0" onClick={() => router.push(user ? `/${user.role.toLowerCase()}/dashboard` : '/dashboard')}>
+        <Button variant="ghost" size="icon" className="mt-1 sm:mt-0 flex-shrink-0" onClick={() => router.push(user ? (user.role === 'SUPERADMIN' ? '/admin/dashboard' : `/${user.role.toLowerCase()}/dashboard`) : '/dashboard')}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div>
@@ -200,7 +200,7 @@ export function ClosedProjectsDashboard() {
                       variant="ghost" 
                       size="sm" 
                       className="text-emerald-600 font-bold hover:bg-emerald-50"
-                      onClick={() => router.push(`/admin/projects/${p.id}`)}
+                      onClick={() => router.push(user ? (user.role === 'SUPERADMIN' ? `/admin/projects/${p.id}` : `/${user.role.toLowerCase()}/projects/${p.id}`) : `/projects/${p.id}`)}
                     >
                       DETAILS <ChevronRight className="h-3 w-3 ml-1" />
                     </Button>

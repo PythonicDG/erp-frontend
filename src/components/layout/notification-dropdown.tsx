@@ -141,7 +141,7 @@ export function NotificationDropdown() {
     }
 
     if (notification.link) {
-      const rolePrefix = `/${user?.role?.toLowerCase() || 'employee'}`;
+      const rolePrefix = user?.role === 'SUPERADMIN' ? '/admin' : `/${user?.role?.toLowerCase() || 'employee'}`;
       let finalLink = notification.link;
       if (!finalLink.startsWith('/admin') && !finalLink.startsWith('/supervisor') && !finalLink.startsWith('/employee')) {
         finalLink = finalLink.startsWith('/') 

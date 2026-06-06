@@ -176,7 +176,7 @@ export function DashboardOverview() {
           icon={<Layers className="text-blue-600" />} 
           trend="+12%" 
           color="blue"
-          onClick={() => handleCardClick('projects', user ? `/${user.role.toLowerCase()}/projects` : '/projects')}
+          onClick={() => handleCardClick('projects', user ? (user.role === 'SUPERADMIN' ? '/admin/projects' : `/${user.role.toLowerCase()}/projects`) : '/projects')}
         />
         <StatCard 
           title="Open Projects" 
@@ -184,7 +184,7 @@ export function DashboardOverview() {
           icon={<Clock className="text-amber-600" />} 
           trend="-2" 
           color="amber"
-          onClick={() => router.push(user ? `/${user.role.toLowerCase()}/dashboard/open` : '/dashboard/open')}
+          onClick={() => router.push(user ? (user.role === 'SUPERADMIN' ? '/admin/dashboard/open' : `/${user.role.toLowerCase()}/dashboard/open`) : '/dashboard/open')}
         />
         <StatCard 
           title="Closed Projects" 
@@ -192,7 +192,7 @@ export function DashboardOverview() {
           icon={<CheckCircle2 className="text-emerald-600" />} 
           trend="+5%" 
           color="emerald"
-          onClick={() => router.push(user ? `/${user.role.toLowerCase()}/dashboard/closed` : '/dashboard/closed')}
+          onClick={() => router.push(user ? (user.role === 'SUPERADMIN' ? '/admin/dashboard/closed' : `/${user.role.toLowerCase()}/dashboard/closed`) : '/dashboard/closed')}
         />
         <StatCard 
           title="Pending ECN" 
@@ -200,7 +200,7 @@ export function DashboardOverview() {
           icon={<FileEdit className="text-indigo-600" />} 
           trend="" 
           color="indigo"
-          onClick={() => handleCardClick('ecn', user ? `/${user.role.toLowerCase()}/ecn` : '/ecn')}
+          onClick={() => handleCardClick('ecn', user ? (user.role === 'SUPERADMIN' ? '/admin/ecn' : `/${user.role.toLowerCase()}/ecn`) : '/ecn')}
         />
         <StatCard 
           title="Pending ASCN" 
@@ -208,7 +208,7 @@ export function DashboardOverview() {
           icon={<FileText className="text-rose-600" />} 
           trend="" 
           color="rose"
-          onClick={() => handleCardClick('ascn', user ? `/${user.role.toLowerCase()}/ascn` : '/ascn')}
+          onClick={() => handleCardClick('ascn', user ? (user.role === 'SUPERADMIN' ? '/admin/ascn' : `/${user.role.toLowerCase()}/ascn`) : '/ascn')}
         />
       </div>
 
@@ -292,7 +292,7 @@ export function DashboardOverview() {
             </div>
             <button 
               className="text-xs font-bold text-blue-600 hover:underline px-4 py-2 bg-blue-50 rounded-lg"
-              onClick={() => handleCardClick('projects', user ? `/${user.role.toLowerCase()}/projects` : '/projects')}
+              onClick={() => handleCardClick('projects', user ? (user.role === 'SUPERADMIN' ? '/admin/projects' : `/${user.role.toLowerCase()}/projects`) : '/projects')}
             >
               View All Projects
             </button>
