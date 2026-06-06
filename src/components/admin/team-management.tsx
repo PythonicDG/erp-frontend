@@ -236,18 +236,25 @@ const OPTIONAL_TABS = [
 
 function UserModal({ onClose, onSubmit, member }: any) {
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    first_name: member?.first_name || '',
-    last_name: member?.last_name || '',
-    email: member?.email || '',
-    username: member?.username || '',
-    phone: member?.phone || '',
-    role: member?.role || 'EMPLOYEE',
-    admin_code: member?.admin_code || '',
-    department: member?.department || '',
-    remarks: member?.remarks || '',
-    password: '',
-    allowed_tabs: member ? (member.allowed_tabs || []) : OPTIONAL_TABS.map(t => t.key).filter(k => k !== 'projects')
+  const [formData, setFormData] = useState(() => {
+    const role = member?.role || 'EMPLOYEE';
+    let allowed_tabs = member ? (member.allowed_tabs || []) : OPTIONAL_TABS.map(t => t.key).filter(k => k !== 'projects');
+    if (role === 'EMPLOYEE') {
+      allowed_tabs = allowed_tabs.filter((k: string) => k !== 'settings' && k !== 'team');
+    }
+    return {
+      first_name: member?.first_name || '',
+      last_name: member?.last_name || '',
+      email: member?.email || '',
+      username: member?.username || '',
+      phone: member?.phone || '',
+      role: role,
+      admin_code: member?.admin_code || '',
+      department: member?.department || '',
+      remarks: member?.remarks || '',
+      password: '',
+      allowed_tabs: allowed_tabs
+    };
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -320,7 +327,14 @@ function UserModal({ onClose, onSubmit, member }: any) {
                <select 
                  className="w-full h-10 px-3 rounded-lg border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-blue-500/20 outline-hidden transition-all"
                  value={formData.role}
-                 onChange={(e) => setFormData({...formData, role: e.target.value as any})}
+                 onChange={(e) => {
+                   const newRole = e.target.value;
+                   let updatedTabs = formData.allowed_tabs;
+                   if (newRole === 'EMPLOYEE') {
+                     updatedTabs = updatedTabs.filter((k: string) => k !== 'settings' && k !== 'team');
+                   }
+                   setFormData({...formData, role: newRole as any, allowed_tabs: updatedTabs});
+                 }}
                >
                  <option value="EMPLOYEE">Employee</option>
                  <option value="SUPERVISOR">Supervisor</option>
@@ -377,20 +391,22 @@ function UserModal({ onClose, onSubmit, member }: any) {
                </label>
                {OPTIONAL_TABS.map((tab) => {
                  const isSuperAdmin = formData.role === 'SUPERADMIN';
-                 const isChecked = isSuperAdmin || formData.allowed_tabs.includes(tab.key);
+                 const isEmployeeDisabledTab = formData.role === 'EMPLOYEE' && (tab.key === 'settings' || tab.key === 'team');
+                 const isDisabled = isSuperAdmin || isEmployeeDisabledTab;
+                 const isChecked = isSuperAdmin || (formData.allowed_tabs.includes(tab.key) && !isEmployeeDisabledTab);
                  return (
                    <label key={tab.key} className={`flex items-center gap-2 text-xs font-semibold select-none transition-colors ${
-                     isSuperAdmin 
-                       ? 'text-slate-400 cursor-not-allowed' 
+                     isDisabled 
+                       ? 'text-slate-400 cursor-not-allowed font-medium' 
                        : 'text-slate-700 cursor-pointer hover:text-slate-900'
                    }`}>
                      <input
                        type="checkbox"
                        checked={isChecked}
-                       disabled={isSuperAdmin}
+                       disabled={isDisabled}
                        className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer disabled:cursor-not-allowed"
                        onChange={(e) => {
-                         if (isSuperAdmin) return;
+                         if (isDisabled) return;
                          const updated = e.target.checked
                            ? [...formData.allowed_tabs, tab.key]
                            : formData.allowed_tabs.filter((k: string) => k !== tab.key);

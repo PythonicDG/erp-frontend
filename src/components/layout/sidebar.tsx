@@ -91,19 +91,19 @@ const navItems: NavItem[] = [
     label: 'Standards Master',
     href: '/standards',
     icon: <BookOpen size={20} />,
-    roles: ['SUPERADMIN', 'ADMIN', 'SUPERVISOR'],
+    roles: ['SUPERADMIN', 'ADMIN', 'SUPERVISOR', 'EMPLOYEE'],
   },
   {
     label: 'Inspection Authority Master',
     href: '/inspection-authorities',
     icon: <Shield size={20} />,
-    roles: ['SUPERADMIN', 'ADMIN', 'SUPERVISOR'],
+    roles: ['SUPERADMIN', 'ADMIN', 'SUPERVISOR', 'EMPLOYEE'],
   },
   {
     label: 'Workflow Design',
     href: '/workflow',
     icon: <Layers size={20} />,
-    roles: ['SUPERADMIN', 'ADMIN', 'SUPERVISOR'],
+    roles: ['SUPERADMIN', 'ADMIN', 'SUPERVISOR', 'EMPLOYEE'],
   },
   {
     label: 'Settings',
